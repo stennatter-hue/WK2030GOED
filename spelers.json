@@ -1,0 +1,452 @@
+[
+ {
+  "n": "Lionel Messi",
+  "c": "ARG",
+  "gp": 1,
+  "g": 3,
+  "a": 0,
+  "s": 5,
+  "sog": 4,
+  "xg": 0.92
+ },
+ {
+  "n": "Erling Haaland",
+  "c": "NOR",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 5,
+  "sog": 4,
+  "xg": 1.14
+ },
+ {
+  "n": "Yasin Ayari",
+  "c": "SWE",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 2,
+  "sog": 2,
+  "xg": 0.1
+ },
+ {
+  "n": "Kai Havertz",
+  "c": "GER",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 3,
+  "sog": 2,
+  "xg": 0.96
+ },
+ {
+  "n": "Kylian Mbappe",
+  "c": "FRA",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 4,
+  "sog": 4,
+  "xg": 0.98
+ },
+ {
+  "n": "Harry Kane",
+  "c": "ENG",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 6,
+  "sog": 4,
+  "xg": 1.19
+ },
+ {
+  "n": "Folarin Balogun",
+  "c": "USA",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 5,
+  "sog": 3,
+  "xg": 0.48
+ },
+ {
+  "n": "Elijah Just",
+  "c": "NZL",
+  "gp": 1,
+  "g": 2,
+  "a": 0,
+  "s": 2,
+  "sog": 2,
+  "xg": 0.36
+ },
+ {
+  "n": "Daichi Kamada",
+  "c": "JPN",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 1,
+  "sog": 1,
+  "xg": 0.14
+ },
+ {
+  "n": "Daniel Munoz",
+  "c": "COL",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 2,
+  "sog": 2,
+  "xg": 0.09
+ },
+ {
+  "n": "Marcus Rashford",
+  "c": "ENG",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 1,
+  "sog": 1,
+  "xg": 0.08
+ },
+ {
+  "n": "Amad Diallo",
+  "c": "CIV",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 2,
+  "sog": 2,
+  "xg": 0.26
+ },
+ {
+  "n": "Crysencio Summerville",
+  "c": "NED",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 1,
+  "sog": 1,
+  "xg": 0.09
+ },
+ {
+  "n": "Alexander Isak",
+  "c": "SWE",
+  "gp": 1,
+  "g": 1,
+  "a": 2,
+  "s": 3,
+  "sog": 2,
+  "xg": 0.25
+ },
+ {
+  "n": "John McGinn",
+  "c": "SCO",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 2,
+  "sog": 1,
+  "xg": 0.31
+ },
+ {
+  "n": "Raul Jimenez",
+  "c": "MEX",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 4,
+  "sog": 3,
+  "xg": 0.76
+ },
+ {
+  "n": "Virgil Van Dijk",
+  "c": "NED",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 1,
+  "sog": 1,
+  "xg": 0.16
+ },
+ {
+  "n": "Luis Diaz",
+  "c": "COL",
+  "gp": 1,
+  "g": 1,
+  "a": 1,
+  "s": 2,
+  "sog": 2,
+  "xg": 0.29
+ },
+ {
+  "n": "Yoane Wissa",
+  "c": "COD",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 2,
+  "sog": 1,
+  "xg": 0.2
+ },
+ {
+  "n": "Leo Ostigard",
+  "c": "NOR",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 2,
+  "sog": 1,
+  "xg": 0.66
+ },
+ {
+  "n": "Bradley Barcola",
+  "c": "FRA",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 1,
+  "sog": 1,
+  "xg": 0.45
+ },
+ {
+  "n": "Breel Embolo",
+  "c": "SUI",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 4,
+  "sog": 2,
+  "xg": 1.22
+ },
+ {
+  "n": "Joao Neves",
+  "c": "POR",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 1,
+  "sog": 1,
+  "xg": 0.12
+ },
+ {
+  "n": "Nico Schlotterbeck",
+  "c": "GER",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 3,
+  "sog": 2,
+  "xg": 0.34
+ },
+ {
+  "n": "Felix Nmecha",
+  "c": "GER",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 4,
+  "sog": 3,
+  "xg": 0.42
+ },
+ {
+  "n": "Arda Guler",
+  "c": "TUR",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 8,
+  "sog": 3,
+  "xg": 0.38
+ },
+ {
+  "n": "Son Heung-min",
+  "c": "KOR",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 6,
+  "sog": 1,
+  "xg": 0.63
+ },
+ {
+  "n": "Dan Ndoye",
+  "c": "SUI",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 6,
+  "sog": 2,
+  "xg": 0.64
+ },
+ {
+  "n": "Kenan Yildiz",
+  "c": "TUR",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 6,
+  "sog": 0,
+  "xg": 0.37
+ },
+ {
+  "n": "Malik Tillman",
+  "c": "USA",
+  "gp": 1,
+  "g": 0,
+  "a": 1,
+  "s": 5,
+  "sog": 2,
+  "xg": 0.55
+ },
+ {
+  "n": "Federico Vinas",
+  "c": "URU",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 5,
+  "sog": 3,
+  "xg": 0.7
+ },
+ {
+  "n": "Omar Marmoush",
+  "c": "EGY",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 5,
+  "sog": 1,
+  "xg": 0.53
+ },
+ {
+  "n": "Julian Quinones",
+  "c": "MEX",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 5,
+  "sog": 2,
+  "xg": 0.25
+ },
+ {
+  "n": "Viktor Gyokeres",
+  "c": "SWE",
+  "gp": 1,
+  "g": 1,
+  "a": 1,
+  "s": 5,
+  "sog": 2,
+  "xg": 0.86
+ },
+ {
+  "n": "Hakan Calhanoglu",
+  "c": "TUR",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 5,
+  "sog": 2,
+  "xg": 0.23
+ },
+ {
+  "n": "Chris Wood",
+  "c": "NZL",
+  "gp": 1,
+  "g": 0,
+  "a": 2,
+  "s": 4,
+  "sog": 2,
+  "xg": 0.22
+ },
+ {
+  "n": "Kevin De Bruyne",
+  "c": "BEL",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 4,
+  "sog": 1,
+  "xg": 0.25
+ },
+ {
+  "n": "Fabian Ruiz",
+  "c": "ESP",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 4,
+  "sog": 1,
+  "xg": 0.23
+ },
+ {
+  "n": "Ruben Vargas",
+  "c": "SUI",
+  "gp": 1,
+  "g": 1,
+  "a": 0,
+  "s": 4,
+  "sog": 2,
+  "xg": 0.54
+ },
+ {
+  "n": "Diego Gomez",
+  "c": "PAR",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 4,
+  "sog": 1,
+  "xg": 0.25
+ },
+ {
+  "n": "Seko Fofana",
+  "c": "CIV",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 4,
+  "sog": 1,
+  "xg": 0.17
+ },
+ {
+  "n": "Federico Valverde",
+  "c": "URU",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 4,
+  "sog": 2,
+  "xg": 0.17
+ },
+ {
+  "n": "Brian Gutierrez",
+  "c": "MEX",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 4,
+  "sog": 0,
+  "xg": 0.26
+ },
+ {
+  "n": "Jean-Ricner Bellegarde",
+  "c": "HAI",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 3,
+  "sog": 0,
+  "xg": 0.12
+ },
+ {
+  "n": "Leandro Trossard",
+  "c": "BEL",
+  "gp": 1,
+  "g": 0,
+  "a": 0,
+  "s": 3,
+  "sog": 0,
+  "xg": 0.04
+ }
+]
