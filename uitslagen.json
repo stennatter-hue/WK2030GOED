@@ -1,0 +1,114 @@
+{
+ "A_MEX_RSA": [
+  2,
+  0
+ ],
+ "A_CZE_KOR": [
+  1,
+  2
+ ],
+ "A_CZE_RSA": [
+  1,
+  1
+ ],
+ "A_KOR_MEX": [
+  0,
+  1
+ ],
+ "B_BIH_CAN": [
+  1,
+  1
+ ],
+ "B_QAT_SUI": [
+  1,
+  1
+ ],
+ "B_BIH_SUI": [
+  1,
+  4
+ ],
+ "B_CAN_QAT": [
+  6,
+  0
+ ],
+ "C_BRA_MAR": [
+  1,
+  1
+ ],
+ "C_HAI_SCO": [
+  0,
+  1
+ ],
+ "D_PAR_USA": [
+  1,
+  4
+ ],
+ "D_AUS_TUR": [
+  2,
+  0
+ ],
+ "E_CUW_GER": [
+  1,
+  7
+ ],
+ "E_CIV_ECU": [
+  1,
+  0
+ ],
+ "F_JPN_NED": [
+  2,
+  2
+ ],
+ "F_SWE_TUN": [
+  5,
+  1
+ ],
+ "G_BEL_EGY": [
+  1,
+  1
+ ],
+ "G_IRN_NZL": [
+  2,
+  2
+ ],
+ "H_CPV_ESP": [
+  0,
+  0
+ ],
+ "H_KSA_URU": [
+  1,
+  1
+ ],
+ "I_FRA_SEN": [
+  3,
+  1
+ ],
+ "I_IRQ_NOR": [
+  1,
+  4
+ ],
+ "J_ALG_ARG": [
+  0,
+  3
+ ],
+ "J_AUT_JOR": [
+  3,
+  1
+ ],
+ "K_COD_POR": [
+  1,
+  1
+ ],
+ "K_COL_UZB": [
+  3,
+  1
+ ],
+ "L_CRO_ENG": [
+  2,
+  4
+ ],
+ "L_GHA_PAN": [
+  1,
+  0
+ ]
+}
