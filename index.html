@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WK 2026 — Voorspelconsole</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#070d0a;--bg2:#0c1611;--surface:#101c15;--surface2:#16271d;--line:#21372a;
+ --txt:#e9f1ea;--muted:#7d9587;--lime:#c6ff3d;--orange:#ff7a45;--amber:#ffc24d;--grey:#46594e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Archivo',sans-serif;background:
+ radial-gradient(circle at 10% -12%,rgba(198,255,61,.10),transparent 42%),
+ radial-gradient(circle at 96% -4%,rgba(255,122,69,.06),transparent 38%),var(--bg);
+ color:var(--txt);min-height:100vh;padding-bottom:70px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* header + nav */
+header{padding:30px 0 0;border-bottom:1px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--lime);border:1px solid var(--line);border-radius:100px;padding:5px 12px;margin-bottom:12px}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime);animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+h1{font-family:'Anton',sans-serif;font-size:clamp(34px,6.5vw,58px);line-height:.88;text-transform:uppercase;letter-spacing:.5px}
+h1 span{color:var(--lime)}
+.tagline{color:var(--muted);margin:9px 0 22px;font-size:14px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+.tab{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;padding:12px 16px;cursor:pointer;transition:color .15s}
+.tab:hover{color:var(--txt)}
+.tab.on{color:var(--lime);border-bottom-color:var(--lime)}
+.panel{display:none;padding-top:26px;animation:fade .25s ease}
+.panel.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2{font-family:'Anton',sans-serif;font-size:21px;text-transform:uppercase;margin:0 0 14px;letter-spacing:.5px}
+h2.mt{margin-top:30px}
+.hint{color:var(--muted);font-size:12.5px;line-height:1.6;margin-bottom:18px;max-width:680px}
+
+/* predictor */
+.match{display:grid;grid-template-columns:1fr 64px 1fr;gap:14px;align-items:start}
+.picker{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.picker label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.picker.away label{color:var(--orange)}
+.picker.home label{color:var(--lime)}
+select{width:100%;margin-top:8px;background:var(--surface2);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:11px 10px;font-family:'Archivo';font-size:15px;font-weight:600;cursor:pointer}
+select:focus{outline:2px solid var(--lime);outline-offset:1px}
+.teaminfo{margin-top:13px;display:flex;flex-direction:column;gap:5px}
+.teaminfo .big{font-size:30px;line-height:1}
+.teaminfo .stat{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.teaminfo .stat b{color:var(--txt);font-weight:500}
+.vs{align-self:center;text-align:center;font-family:'Anton',sans-serif;font-size:22px;color:var(--muted);padding-top:42px}
+
+.result{margin-top:18px;background:linear-gradient(160deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:22px}
+.splitbar{display:flex;height:46px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.splitbar div{display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;transition:flex-basis .4s ease;white-space:nowrap;overflow:hidden}
+.seg-h{background:linear-gradient(90deg,#9fdc1f,var(--lime));color:#06120a}
+.seg-d{background:var(--surface2);color:var(--muted)}
+.seg-a{background:linear-gradient(90deg,var(--orange),#ff9b6b);color:#2a0f06}
+.splitlbl{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.eg{display:flex;align-items:center;justify-content:center;gap:18px;margin:20px 0 4px}
+.eg .num{font-family:'Anton',sans-serif;font-size:46px;line-height:1}
+.eg .num.h{color:var(--lime)}.eg .num.a{color:var(--orange)}
+.eg .dash{color:var(--muted);font-size:26px}
+.eg .lbl{text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.scores{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.scores .chip{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--surface2);border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--muted)}
+.scores .chip b{color:var(--txt)}
+.scores .chip:first-child{border-color:var(--lime);color:var(--lime)}
+
+.blend{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.blend-bar{height:9px;border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--line)}
+.blend-bar .elo{background:#3a5566}.blend-bar .form{background:var(--amber)}
+.blend-row{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-top:7px}
+.blend-row .e{color:#6f99b5}.blend-row .f{color:var(--amber)}
+.blend-note{color:var(--muted);font-size:12px;line-height:1.55;margin-top:11px}
+.blend-note b{color:var(--txt)}
+.srcs{display:flex;gap:20px;margin-top:11px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.srcs b{color:var(--txt);font-weight:500}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:16px;cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--lime);width:15px;height:15px}
+.weightctl{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.weightctl .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;gap:10px;flex-wrap:wrap}
+.weightctl .lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.weightctl .auto{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+.weightctl .auto input{accent-color:var(--lime);width:14px;height:14px}
+.slider{display:flex;align-items:center;gap:12px}
+.slider .end{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.slider .end.e{color:#6f99b5}.slider .end.f{color:var(--amber)}
+.slider input[type=range]{flex:1;height:5px;accent-color:var(--lime);cursor:pointer}
+.slider input[type=range]:disabled{opacity:.45;cursor:not-allowed}
+
+/* poules */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:13px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px}
+.pcard h3{font-family:'Anton',sans-serif;font-size:15px;text-transform:uppercase;color:var(--lime);margin-bottom:11px;letter-spacing:.5px}
+.ptable{width:100%;border-collapse:collapse;font-size:12.5px}
+.ptable th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:center;padding:0 2px 7px}
+.ptable th.l{text-align:left}
+.ptable td{padding:5px 2px;border-top:1px solid var(--line);text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px}
+.ptable td.tm{text-align:left;font-family:inherit;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:118px}
+.ptable td.tm .fl{font-size:14px;margin-right:6px}
+.ptable td.pos{color:var(--muted)}
+.ptable td.pt{font-weight:700;color:var(--txt)}
+.ptable td.xe{color:var(--muted)}
+.ptable td.xp{font-weight:700}
+.ptable tr.qdir td.xp{color:var(--lime)}
+.ptable tr.qthird td.xp{color:var(--amber)}
+.ptable tr.qout td.xp{color:var(--grey)}
+.pleg{display:flex;gap:12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:13px}
+.pleg span{display:inline-flex;align-items:center;gap:5px}
+.pleg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* tables (toernooi + teams) */
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+.fchip{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 13px;cursor:pointer}
+.fchip:hover{color:var(--txt)}.fchip.on{background:var(--lime);color:#06120a;border-color:var(--lime);font-weight:700}
+.bars{display:flex;flex-direction:column;gap:6px;margin-bottom:26px}
+.brow{display:grid;grid-template-columns:150px 1fr 50px;gap:12px;align-items:center}
+.brow .nm{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow .track{height:21px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.brow .fill{height:100%;background:linear-gradient(90deg,var(--lime),#9fdc1f);border-radius:6px;min-width:2px}
+.brow .val{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--lime);text-align:right;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:right;padding:9px 7px;border-bottom:1px solid var(--grey);cursor:pointer;white-space:nowrap}
+th.l,td.l{text-align:left}th:hover{color:var(--lime)}
+td{padding:9px 7px;text-align:right;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace}
+td.nm{font-family:'Archivo',sans-serif;font-weight:600}
+tr:hover td{background:rgba(198,255,61,.04)}
+.fl{font-size:15px}
+.heat{border-radius:4px;padding:3px 6px;display:inline-block;min-width:40px}
+.cov{display:inline-flex;gap:2px}
+.cov i{width:6px;height:6px;border-radius:50%;background:var(--grey)}
+.cov i.on{background:var(--lime)}
+.foot{color:var(--muted);font-size:11px;margin-top:24px;line-height:1.7;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--line);padding-top:16px}
+.foot b{color:var(--amber)}
+.tracksum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.tracksum .card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:12px 18px;min-width:118px}
+.tracksum .card .v{font-family:'Anton',sans-serif;font-size:26px;color:var(--lime);line-height:1}
+.tracksum .card .k{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.score-in{width:32px;background:var(--surface2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 2px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px}
+.score-in:focus{outline:1px solid var(--lime)}
+.tip{font-family:'JetBrains Mono',monospace;font-weight:700}
+.tip.t1{color:var(--lime)}.tip.tX{color:var(--muted)}.tip.t2{color:var(--orange)}
+.ok{color:var(--lime);font-weight:700}.no{color:var(--orange);font-weight:700}
+.resetbtn{margin-top:16px;background:none;border:1px solid var(--line);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px 14px;border-radius:8px;cursor:pointer}
+.resetbtn:hover{border-color:var(--orange);color:var(--orange)}
+.pos{color:var(--lime)}.neg{color:var(--orange)}
+/* knock-out bracket */
+.brbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.brbtn{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.03em;background:var(--lime);color:#06120a;border:none;border-radius:9px;padding:10px 15px;cursor:pointer}
+.brbtn:hover{filter:brightness(1.08)}
+.brbtn.sec{background:none;color:var(--muted);border:1px solid var(--line);font-weight:400}
+.brbtn.sec:hover{color:var(--txt);border-color:var(--grey)}
+.brnote{color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace}
+.champbar{display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,rgba(198,255,61,.16),transparent);border:1px solid var(--line);border-left:3px solid var(--lime);border-radius:10px;padding:11px 16px;margin-bottom:16px}
+.champbar .ttl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.champbar .who{font-family:'Anton',sans-serif;font-size:24px;color:var(--lime);line-height:1}
+.bracket{display:flex;gap:14px;overflow-x:auto;padding-bottom:14px}
+.bround{display:flex;flex-direction:column;justify-content:space-around;gap:7px;min-width:150px}
+.bround .rlbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center}
+.bmatch{display:flex;flex-direction:column;gap:1px;background:var(--line);border-radius:7px;overflow:hidden}
+.bmatch .mc{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.05em;color:var(--grey);text-align:center;background:var(--surface2);padding:2px 0}
+.bteam{display:flex;gap:5px;align-items:center;padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);background:var(--surface);cursor:pointer;white-space:nowrap;border:none;width:100%;text-align:left}
+.bmatch .bprob{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.03em;color:var(--muted);text-align:right;background:var(--surface2);padding:2px 8px}
+.bmatch .bprob.tight{color:var(--amber);font-weight:700}
+.bteam:hover{background:rgba(198,255,61,.08);color:var(--txt)}
+.bteam.win{color:var(--lime);font-weight:700;background:rgba(198,255,61,.10)}
+.bteam.empty{color:var(--grey);cursor:default}
+.bteam.empty:hover{background:var(--surface)}
+.bteam.forced{box-shadow:inset 3px 0 0 var(--orange)}
+.bteam .bc{opacity:.55;font-size:10px}
+/* speler vs model */
+.vs-card{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;margin-bottom:16px}
+.vs-side{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 18px}
+.vs-side.you{border-color:rgba(255,194,77,.45)}
+.vs-side.model{border-color:rgba(198,255,61,.4)}
+.vs-side .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.vs-side.you .lbl{color:var(--amber)}.vs-side.model .lbl{color:var(--lime)}
+.vs-side .acc{font-family:'Anton',sans-serif;font-size:32px;line-height:.9;color:var(--txt)}
+.vs-side .sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+.vs-mid{display:flex;align-items:center;font-family:'Anton',sans-serif;font-size:16px;color:var(--muted)}
+.upick{display:inline-flex;gap:2px}
+.upick button{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--surface2);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:4px 6px;cursor:pointer;min-width:22px}
+.upick button:hover{color:var(--txt)}
+.upick button.on{background:var(--amber);color:#2a1c00;border-color:var(--amber);font-weight:700}
+/* wedstrijdstats-invoer */
+.msnote{color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;margin-bottom:14px;line-height:1.6}
+.msgrid{display:flex;flex-direction:column;gap:10px}
+.mscard{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+.mscard .mtitle{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.mscard .mtitle .dn{color:var(--muted);font-size:10px}
+.msteam{display:grid;grid-template-columns:88px repeat(4,1fr);gap:7px;align-items:center;margin-top:6px}
+.msteam .tn{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msteam .tn.home{color:var(--lime)}.msteam .tn.away{color:var(--orange)}
+.mshead{display:grid;grid-template-columns:88px repeat(4,1fr);gap:7px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.ms-in{width:100%;background:var(--surface2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 4px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px}
+.ms-in:focus{outline:1px solid var(--lime)}
+.ms-in.filled{border-color:rgba(198,255,61,.5)}
+.msodds{display:flex;gap:7px;align-items:center;margin-top:9px;border-top:1px dashed var(--line);padding-top:9px}
+.msodds .ol{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);width:84px;flex:none}
+.od-in{max-width:62px}
+.oddsread{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:7px;padding-left:84px;line-height:1.5}
+.oddsread b{color:var(--txt);font-weight:500}
+@media(max-width:620px){.match{grid-template-columns:1fr;gap:10px}.vs{padding-top:0;padding:4px 0}.eg .num{font-size:36px}.msteam,.mshead{grid-template-columns:62px repeat(4,1fr);gap:4px}.oddsread{padding-left:0}}
+</style></head>
+<body><div class="wrap">
+<header>
+  <div class="badge"><span class="dot"></span>WK 2026 · 48 landen · <span id="nsims"></span> simulaties</div>
+  <h1>Voorspel<span>console</span></h1>
+  <p class="tagline">Eén plek voor je voorspellingen, poules en kampioenskansen — gevoed door Elo en je eigen vorm-data.</p>
+  <nav>
+    <button class="tab on" data-t="pred">Voorspeller</button>
+    <button class="tab" data-t="poules">Poules</button>
+    <button class="tab" data-t="toernooi">Toernooi</button>
+    <button class="tab" data-t="knockout">Knock-outs</button>
+    <button class="tab" data-t="tracker">Poule-tracker</button>
+    <button class="tab" data-t="matchstats">Wedstrijdstats</button>
+    <button class="tab" data-t="teams">Teams &amp; data</button>
+    <button class="tab" data-t="spelers">Spelers</button>
+  </nav>
+</header>
+
+<!-- VOORSPELLER -->
+<section class="panel on" id="pred">
+  <h2>Wedstrijd doorrekenen</h2>
+  <p class="hint">Kies twee landen. Het model mengt Elo met recente vorm — hoe meer wedstrijden je hebt ingevoerd, hoe zwaarder de vorm telt. Een land zonder vorm-data leunt volledig op Elo.</p>
+  <div class="match">
+    <div class="picker home"><label>Team 1</label><select id="selH"></select>
+      <div class="teaminfo" id="infoH"></div></div>
+    <div class="vs">VS</div>
+    <div class="picker away"><label>Team 2</label><select id="selA"></select>
+      <div class="teaminfo" id="infoA"></div></div>
+  </div>
+  <label class="toggle"><input type="checkbox" id="hostadv">Thuisvoordeel als team 1 gastland is (Mexico / VS / Canada)</label>
+
+  <div class="weightctl">
+    <div class="top">
+      <span class="lab">Balans Elo ↔ vorm</span>
+      <label class="auto"><input type="checkbox" id="autow" checked>Databewust (automatisch)</label>
+    </div>
+    <div class="slider">
+      <span class="end e">100% Elo</span>
+      <input type="range" id="wslider" min="0" max="100" value="29" disabled>
+      <span class="end f">100% vorm</span>
+    </div>
+  </div>
+
+  <div class="result" id="result"></div>
+</section>
+
+<!-- POULES -->
+<section class="panel" id="poules">
+  <h2>De twaalf poules</h2>
+  <p class="hint">De huidige stand uit je ingevoerde uitslagen, met daarnaast de door het model verwachte eindpunten en eindpositie. Gespeelde duels tellen als echte uitslag; nog te spelen duels vult het model in op basis van de actuele vorm.</p>
+  <div class="pleg"><span><i style="background:var(--lime)"></i>verwacht 1e/2e — direct door</span><span><i style="background:var(--amber)"></i>verwacht 3e — kans via beste nummers 3</span><span><i style="background:var(--grey)"></i>verwacht 4e</span></div>
+  <div class="pgrid" id="pgrid"></div>
+</section>
+
+<!-- TOERNOOI -->
+<section class="panel" id="toernooi">
+  <h2>Kampioenskans — top 24</h2>
+  <div class="brbar">
+    <button class="brbtn sec" id="simRefresh">↻ opnieuw simuleren</button>
+    <span class="brnote" id="simStatus"></span>
+  </div>
+  <div class="bars" id="bars"></div>
+  <h2 class="mt">Alle landen — kans per ronde</h2>
+  <div class="controls" id="gfilter"></div>
+  <table id="simtbl"><thead><tr>
+    <th class="l" data-k="name">land</th><th data-k="group">grp</th><th data-k="elo">elo</th>
+    <th data-k="win_group">wint grp</th><th data-k="through">door</th><th data-k="r16">8e</th>
+    <th data-k="qf">kwart</th><th data-k="sf">halve</th><th data-k="final">finale</th>
+    <th data-k="champion">kampioen</th><th data-k="exp_finish">verw.pos</th>
+  </tr></thead><tbody></tbody></table>
+  <p class="foot">Live browser-simulatie over het echte WK 2026-schema (M73–M104). Groepsfase en knock-out worden gewogen geloot; verlenging = lambda's ×⅓, strafschoppen licht naar Elo gewogen. Beweegt mee met je ingevoerde wedstrijdstats. <b>Modelkansen, geen garanties.</b></p>
+</section>
+
+<!-- WEDSTRIJDSTATS -->
+<section class="panel" id="matchstats">
+  <h2>Wedstrijdstats invoeren</h2>
+  <p class="hint">Vul na elke speelronde de cijfers per gespeelde groepswedstrijd in — het model voegt ze toe aan de vorm van beide landen en herberekent meteen de Voorspeller, het knock-outschema én (bij heropenen) de live kampioenskansen. De ingevulde goals verschijnen automatisch als uitslag in de Poule-tracker. Je kunt er ook de 1/X/2-odds bij zetten: dan zie je per wedstrijd de modelkans naast de marktkans en een gecombineerde 'samen'-kans.</p>
+  <p class="msnote" id="msnote"></p>
+  <div class="brbar" style="margin-bottom:14px">
+    <button class="brbtn sec" id="exportBtn">⬇ Exporteer back-up</button>
+    <button class="brbtn sec" id="importBtn">⬆ Importeer back-up</button>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    <span class="brnote" id="backupNote">slaat al je stats, odds, uitslagen en tips op in één bestand</span>
+  </div>
+  <div class="controls" id="msfilter"></div>
+  <div class="msgrid" id="msgrid"></div>
+  <button class="resetbtn" id="msreset">Wis alle ingevoerde wedstrijdstats</button>
+</section>
+
+<!-- TEAMS -->
+<section class="panel" id="teams">
+  <h2>Alle 48 landen</h2>
+  <p class="hint">Elo, FIFA-rang en de ingevoerde vorm-cijfers per land. De stippen tonen hoeveel van de 5 wedstrijden xG-data hebben — meer data = zwaarder vorm-gewicht in de voorspeller.</p>
+  <table id="teamtbl"><thead><tr>
+    <th class="l" data-k="name">land</th><th data-k="group">grp</th><th data-k="elo">elo</th>
+    <th data-k="fifa_rank">fifa</th><th data-k="xg_for_roll">xG voor</th><th data-k="xga_roll">xG tegen</th>
+    <th data-k="big_chance_rate">gr.kansen</th><th data-k="goals_for_roll">goals v</th>
+    <th data-k="finishing">afwerking</th><th data-k="gk_perf">keeper</th>
+    <th data-k="form_points">vorm</th><th data-k="n_xg">data</th>
+  </tr></thead><tbody></tbody></table>
+</section>
+
+<section class="panel" id="spelers">
+  <h2>Spelers &amp; MVP</h2>
+  <p class="hint">Doelpunten, assists, schoten en schoten op doel per speler (bron: officiële WK-statistieken). De MVP-score weegt ze samen: goal ×4, assist ×3, schot op doel ×0,7, overig schot ×0,15, xG ×0,5. Klik een kolomkop om te sorteren.</p>
+  <div class="brbar" style="margin-bottom:13px">
+    <button class="brbtn sec" id="plImportBtn">⬆ Spelersdata bijwerken (plakken)</button>
+    <button class="brbtn sec" id="plResetBtn">herstel startset</button>
+    <span class="brnote" id="plNote">startset uit ronde 1 — kan per ronde worden bijgewerkt</span>
+  </div>
+  <textarea id="plPaste" style="display:none;width:100%;height:90px;background:var(--surface);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:12px" placeholder="Plak hier je spelerslijst. Twee formaten kunnen:&#10;1) JSON-array&#10;2) één speler per regel: Naam, LAND, goals, assists, schoten, schoten op doel, xG&#10;bv:  Lionel Messi, ARG, 3, 0, 5, 4, 0.92"></textarea>
+  <div style="margin-bottom:12px"><label style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-right:8px">filter op land</label><select id="plLand" style="background:var(--surface);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:12px"></select></div>
+  <table id="playertbl"><thead><tr>
+    <th class="l" data-k="n">speler</th><th data-k="c">land</th><th data-k="gp">wed</th>
+    <th data-k="g">goals</th><th data-k="a">assists</th><th data-k="s">schoten</th>
+    <th data-k="sog">op doel</th><th data-k="xg">xG</th><th data-k="mvp">MVP</th>
+  </tr></thead><tbody></tbody></table>
+</section>
+
+<!-- KNOCK-OUTS -->
+<section class="panel" id="knockout">
+  <h2>Knock-out schema</h2>
+  <p class="hint">De laatste 32 volgens het model, geplaatst op Elo. Klik op een land om het te laten winnen (een upset) — het schema erna rekent automatisch opnieuw. Of laat het toeval beslissen met één willekeurig gesimuleerd toernooi.</p>
+  <div class="brbar">
+    <button class="brbtn" id="simBtn">⚡ Simuleer 1 willekeurig WK</button>
+    <button class="brbtn sec" id="brReset">Terug naar model</button>
+    <span class="brnote" id="brModeNote"></span>
+  </div>
+  <div class="champbar"><div><div class="ttl">voorspelde kampioen</div><div class="who" id="brChamp">—</div></div></div>
+  <div class="bracket" id="bracket"></div>
+</section>
+
+<!-- POULE-TRACKER -->
+<section class="panel" id="tracker">
+  <h2>Poule-tracker — jij vs het model</h2>
+  <p class="hint">Voorspel zelf elke groepswedstrijd (jouw tip), vul daarna de echte uitslag in, en zie wie er scherper voorspelt: jij of het model. Gastlanden krijgen thuisvoordeel in de modeltip. Alles blijft in deze browser bewaard.</p>
+  <div class="vs-card" id="vscard"></div>
+  <div class="controls" id="tgfilter"></div>
+  <table id="tracktbl"><thead><tr>
+    <th class="l">wedstrijd</th><th>model tipt</th><th>kans</th><th>jouw tip</th><th>uitslag</th><th>raak?</th>
+  </tr></thead><tbody></tbody></table>
+  <button class="resetbtn" id="trackreset">Wis alle ingevoerde tips en uitslagen</button>
+</section>
+
+</div>
+<script>
+const BUNDLE = {"teams": [{"code": "MEX", "name": "Mexico", "group": "A", "elo": 1858.0, "fifa_rank": 16, "is_host": true, "feat": {"xg_for_roll": 1.213, "xga_roll": 0.931, "big_chance_rate": 1.7, "form_points": 0.796, "goals_for_roll": 1.8, "goals_against_roll": 0.4, "shots_for_roll": 12.6, "finishing": 0.646, "gk_perf": 0.174, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "0001-04-01", "opp": "BELGIUM", "loc": "N", "gf": 1, "ga": 1, "xg": 0.9, "xga": 0.29, "xg_adj": 0.92, "xga_adj": 0.284, "big_chances": 1.0, "shots": 10.0}, {"date": "2026-03-29", "opp": "PORTUGAL", "loc": "T", "gf": 0, "ga": 0, "xg": 0.52, "xga": 1.4, "xg_adj": 0.551, "xga_adj": 1.321, "big_chances": 1.0, "shots": 7.0}, {"date": "2026-05-12", "opp": "GHANA", "loc": "N", "gf": 2, "ga": 0, "xg": 1.5, "xga": 0.17, "xg_adj": 1.347, "xga_adj": 0.189, "big_chances": 1.0, "shots": 16.0}, {"date": "2026-05-31", "opp": "AUSTRALIA", "loc": "N", "gf": 1, "ga": 0, "xg": 0.59, "xga": 0.56, "xg_adj": 0.587, "xga_adj": 0.563, "big_chances": 1.0, "shots": 13.0}, {"date": "2026-06-05", "opp": "SERBIA", "loc": "T", "gf": 5, "ga": 1, "xg": 2.26, "xga": 0.45, "xg_adj": 2.222, "xga_adj": 0.458, "big_chances": 4.0, "shots": 17.0}]}, {"code": "RSA", "name": "South Africa", "group": "A", "elo": 1524.0, "fifa_rank": 60, "is_host": false, "feat": {"xg_for_roll": 1.356, "xga_roll": 1.103, "big_chance_rate": 2.5, "form_points": 0.155, "goals_for_roll": 1.0, "goals_against_roll": 1.6, "shots_for_roll": 15.0, "finishing": -0.544, "gk_perf": -0.768, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-12-29", "opp": "ZIMBABWE", "loc": "U", "gf": 2, "ga": 3, "xg": 1.28, "xga": 1.51, "xg_adj": 1.077, "xga_adj": 1.794, "big_chances": 4.0, "shots": 16.0}, {"date": "2026-01-04", "opp": "KAMEROEN", "loc": "T", "gf": 1, "ga": 2, "xg": 2.08, "xga": 1.36, "xg_adj": 2.01, "xga_adj": 1.407, "big_chances": 4.0, "shots": 18.0}, {"date": "2026-03-27", "opp": "PANAMA", "loc": "N", "gf": 1, "ga": 1, "xg": 1.85, "xga": 0.23, "xg_adj": 1.811, "xga_adj": 0.235, "big_chances": 5.0, "shots": 12.0}, {"date": "2026-03-31", "opp": "PANAMA", "loc": "N", "gf": 1, "ga": 2, "xg": 0.33, "xga": 0.99, "xg_adj": 0.323, "xga_adj": 1.011, "big_chances": 1.0, "shots": 7.0}, {"date": "2026-05-29", "opp": "NICARAGUA", "loc": "N", "gf": 0, "ga": 0, "xg": 2.18, "xga": 0.07, "xg_adj": 1.834, "xga_adj": 0.083, "big_chances": 2.0, "shots": 22.0}]}, {"code": "KOR", "name": "South Korea", "group": "A", "elo": 1752.0, "fifa_rank": 22, "is_host": false, "feat": {"xg_for_roll": 1.366, "xga_roll": 1.103, "big_chance_rate": 1.8, "form_points": 0.64, "goals_for_roll": 1.4, "goals_against_roll": 1.0, "shots_for_roll": 12.8, "finishing": -0.184, "gk_perf": -0.138, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "GHANA", "loc": "T", "gf": 1, "ga": 0, "xg": 1.23, "xga": 0.49, "xg_adj": 1.105, "xga_adj": 0.546, "big_chances": 2.0, "shots": 7.0}, {"date": "2026-03-28", "opp": "IVOORKUST", "loc": "N", "gf": 0, "ga": 4, "xg": 1.07, "xga": 3.22, "xg_adj": 1.025, "xga_adj": 3.361, "big_chances": 1.0, "shots": 12.0}, {"date": "2026-03-31", "opp": "AUSTRIA", "loc": "U", "gf": 0, "ga": 1, "xg": 0.71, "xga": 0.39, "xg_adj": 0.716, "xga_adj": 0.387, "big_chances": 1.0, "shots": 11.0}, {"date": "2026-05-31", "opp": "TRINIDAD AND TOBAGO", "loc": "N", "gf": 5, "ga": 0, "xg": 3.76, "xga": 0.07, "xg_adj": 3.303, "xga_adj": 0.08, "big_chances": 5.0, "shots": 19.0}, {"date": "2026-06-04", "opp": "EL SALVADOR", "loc": "N", "gf": 1, "ga": 0, "xg": 1.15, "xga": 0.14, "xg_adj": 1.01, "xga_adj": 0.159, "big_chances": 0.0, "shots": 15.0}]}, {"code": "CZE", "name": "Czechia", "group": "A", "elo": 1726.0, "fifa_rank": 43, "is_host": false, "feat": {"xg_for_roll": 1.515, "xga_roll": 1.15, "big_chance_rate": 2.625, "form_points": 0.76, "goals_for_roll": 3.0, "goals_against_roll": 1.2, "shots_for_roll": 15.8, "finishing": 1.01, "gk_perf": -0.457, "n_xg": 3, "n_matches": 5}, "matches": [{"date": "2025-11-17", "opp": "GIBRALTAR", "loc": "T", "gf": 6, "ga": 0, "xg": 4.29, "xga": 0.0, "xg_adj": 3.015, "xga_adj": 0.0, "big_chances": 8.0, "shots": 25.0}, {"date": "2026-03-26", "opp": "IRELAND", "loc": "T", "gf": 2, "ga": 2, "xg": 1.45, "xga": 1.28, "xg_adj": 1.376, "xga_adj": 1.349, "big_chances": 2.0, "shots": 12.0}, {"date": "2026-03-31", "opp": "DENMARK", "loc": "T", "gf": 2, "ga": 2, "xg": 1.23, "xga": 1.35, "xg_adj": 1.23, "xga_adj": 1.35, "big_chances": 2.0, "shots": 9.0}, {"date": "2026-05-31", "opp": "KOSOVO", "loc": "N", "gf": 2, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 12.0}, {"date": "2026-06-05", "opp": "GUATEMALA", "loc": "N", "gf": 3, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 21.0}]}, {"code": "CAN", "name": "Canada", "group": "B", "elo": 1784.0, "fifa_rank": 29, "is_host": true, "feat": {"xg_for_roll": 1.256, "xga_roll": 1.036, "big_chance_rate": 1.5, "form_points": 0.58, "goals_for_roll": 1.2, "goals_against_roll": 0.6, "shots_for_roll": 14.8, "finishing": -0.094, "gk_perf": 0.134, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2026-01-18", "opp": "GUATEMALA", "loc": "N", "gf": 1, "ga": 0, "xg": 1.12, "xga": 0.15, "xg_adj": 1.004, "xga_adj": 0.167, "big_chances": 1.0, "shots": 14.0}, {"date": "2026-03-28", "opp": "ICELAND", "loc": "N", "gf": 2, "ga": 2, "xg": 2.33, "xga": 0.68, "xg_adj": 2.171, "xga_adj": 0.73, "big_chances": 3.0, "shots": 15.0}, {"date": "2026-04-01", "opp": "TUNESIA", "loc": "N", "gf": 0, "ga": 0, "xg": 0.88, "xga": 0.29, "xg_adj": 0.831, "xga_adj": 0.307, "big_chances": 0.0, "shots": 14.0}, {"date": "2026-06-02", "opp": "OEZBEKISTAN", "loc": "T", "gf": 2, "ga": 0, "xg": 0.83, "xga": 0.99, "xg_adj": 0.81, "xga_adj": 1.015, "big_chances": 2.0, "shots": 10.0}, {"date": "2026-06-06", "opp": "IRELAND", "loc": "T", "gf": 1, "ga": 1, "xg": 1.31, "xga": 1.56, "xg_adj": 1.243, "xga_adj": 1.644, "big_chances": 0.0, "shots": 21.0}]}, {"code": "BIH", "name": "Bosnia and Herzegovina", "group": "B", "elo": 1594.0, "fifa_rank": 71, "is_host": false, "feat": {"xg_for_roll": 1.297, "xga_roll": 1.236, "big_chance_rate": 1.875, "form_points": 0.333, "goals_for_roll": 0.8, "goals_against_roll": 0.8, "shots_for_roll": 15.2, "finishing": -0.273, "gk_perf": 0.133, "n_xg": 3, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "AUSTRIA", "loc": "U", "gf": 1, "ga": 1, "xg": 0.81, "xga": 1.2, "xg_adj": 0.817, "xga_adj": 1.189, "big_chances": 1.0, "shots": 8.0}, {"date": "2026-03-26", "opp": "WALES", "loc": "U", "gf": 1, "ga": 1, "xg": 1.1, "xga": 1.34, "xg_adj": 1.07, "xga_adj": 1.377, "big_chances": 4.0, "shots": 14.0}, {"date": "2026-03-31", "opp": "ITALIE", "loc": "T", "gf": 1, "ga": 1, "xg": 1.91, "xga": 0.86, "xg_adj": 1.992, "xga_adj": 0.825, "big_chances": 1.0, "shots": 30.0}, {"date": "2026-05-29", "opp": "NOORD-MACEDONIE", "loc": "T", "gf": 0, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 16.0}, {"date": "2026-06-06", "opp": "PANAMA", "loc": "N", "gf": 1, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 8.0}]}, {"code": "QAT", "name": "Qatar", "group": "B", "elo": 1425.0, "fifa_rank": 56, "is_host": false, "feat": {"xg_for_roll": 1.026, "xga_roll": 1.528, "big_chance_rate": 1.8, "form_points": 0.137, "goals_for_roll": 0.2, "goals_against_roll": 1.2, "shots_for_roll": 11.0, "finishing": -0.644, "gk_perf": 0.402, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "0001-12-04", "opp": "SYRIE", "loc": "U", "gf": 1, "ga": 1, "xg": 1.67, "xga": 1.46, "xg_adj": 1.467, "xga_adj": 1.662, "big_chances": 4.0, "shots": 17.0}, {"date": "2025-12-01", "opp": "PALESTINA", "loc": "T", "gf": 0, "ga": 1, "xg": 0.55, "xga": 0.98, "xg_adj": 0.473, "xga_adj": 1.139, "big_chances": 1.0, "shots": 10.0}, {"date": "2025-12-07", "opp": "TUNESIA", "loc": "T", "gf": 0, "ga": 3, "xg": 0.6, "xga": 2.53, "xg_adj": 0.567, "xga_adj": 2.679, "big_chances": 1.0, "shots": 12.0}, {"date": "2026-05-02", "opp": "IRELAND", "loc": "N", "gf": 0, "ga": 1, "xg": 0.4, "xga": 1.9, "xg_adj": 0.38, "xga_adj": 2.002, "big_chances": 0.0, "shots": 8.0}, {"date": "2026-06-06", "opp": "EL SALVADOR", "loc": "N", "gf": 0, "ga": 0, "xg": 1.0, "xga": 1.14, "xg_adj": 0.878, "xga_adj": 1.298, "big_chances": 3.0, "shots": 8.0}]}, {"code": "SUI", "name": "Switzerland", "group": "B", "elo": 1889.0, "fifa_rank": 18, "is_host": false, "feat": {"xg_for_roll": 1.375, "xga_roll": 1.285, "big_chance_rate": 2.5, "form_points": 0.431, "goals_for_roll": 1.8, "goals_against_roll": 1.4, "shots_for_roll": 9.2, "finishing": 0.318, "gk_perf": -0.122, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "KOSOVO", "loc": "U", "gf": 1, "ga": 1, "xg": 0.92, "xga": 0.6, "xg_adj": 0.873, "xga_adj": 0.632, "big_chances": 3.0, "shots": 6.0}, {"date": "2026-03-27", "opp": "GERMANY", "loc": "T", "gf": 3, "ga": 4, "xg": 0.59, "xga": 2.63, "xg_adj": 0.614, "xga_adj": 2.528, "big_chances": 2.0, "shots": 7.0}, {"date": "2026-03-31", "opp": "NORWAY", "loc": "U", "gf": 0, "ga": 0, "xg": 0.51, "xga": 0.74, "xg_adj": 0.529, "xga_adj": 0.714, "big_chances": 2.0, "shots": 5.0}, {"date": "2026-05-31", "opp": "JORDANIA", "loc": "N", "gf": 4, "ga": 1, "xg": 3.97, "xga": 1.39, "xg_adj": 3.823, "xga_adj": 1.444, "big_chances": 6.0, "shots": 19.0}, {"date": "2026-06-06", "opp": "AUSTRALIA", "loc": "N", "gf": 1, "ga": 1, "xg": 1.42, "xga": 1.03, "xg_adj": 1.412, "xga_adj": 1.036, "big_chances": 3.0, "shots": 9.0}]}, {"code": "BRA", "name": "Brazil", "group": "C", "elo": 1984.0, "fifa_rank": 5, "is_host": false, "feat": {"xg_for_roll": 1.939, "xga_roll": 1.025, "big_chance_rate": 3.0, "form_points": 0.741, "goals_for_roll": 2.6, "goals_against_roll": 1.4, "shots_for_roll": 16.6, "finishing": 0.014, "gk_perf": -0.634, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "TUNESIA", "loc": "N", "gf": 1, "ga": 1, "xg": 2.69, "xga": 0.58, "xg_adj": 2.54, "xga_adj": 0.614, "big_chances": 2.0, "shots": 21.0}, {"date": "2026-03-26", "opp": "FRANCE", "loc": "N", "gf": 1, "ga": 2, "xg": 2.0, "xga": 1.29, "xg_adj": 2.183, "xga_adj": 1.182, "big_chances": 4.0, "shots": 17.0}, {"date": "2026-04-01", "opp": "CROATIA", "loc": "N", "gf": 3, "ga": 1, "xg": 2.18, "xga": 0.96, "xg_adj": 2.273, "xga_adj": 0.921, "big_chances": 4.0, "shots": 13.0}, {"date": "2026-05-31", "opp": "PANAMA", "loc": "N", "gf": 6, "ga": 2, "xg": 3.58, "xga": 0.58, "xg_adj": 3.504, "xga_adj": 0.593, "big_chances": 6.0, "shots": 20.0}, {"date": "2026-06-07", "opp": "EGYPT", "loc": "N", "gf": 2, "ga": 1, "xg": 2.48, "xga": 0.42, "xg_adj": 2.387, "xga_adj": 0.436, "big_chances": 5.0, "shots": 12.0}]}, {"code": "MAR", "name": "Morocco", "group": "C", "elo": 1821.0, "fifa_rank": 8, "is_host": false, "feat": {"xg_for_roll": 1.497, "xga_roll": 0.992, "big_chance_rate": 2.667, "form_points": 0.726, "goals_for_roll": 2.6, "goals_against_roll": 0.6, "shots_for_roll": 12.75, "finishing": 0.16, "gk_perf": -0.137, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2026-03-27", "opp": "ECUADOR", "loc": "N", "gf": 1, "ga": 1, "xg": 1.37, "xga": 0.49, "xg_adj": 1.43, "xga_adj": 0.469, "big_chances": 2.0, "shots": 12.0}, {"date": "2026-03-31", "opp": "PARAGUAY", "loc": "N", "gf": 2, "ga": 1, "xg": 1.1, "xga": 0.91, "xg_adj": 1.112, "xga_adj": 0.9, "big_chances": 2.0, "shots": 6.0}, {"date": "2026-05-26", "opp": "BURUNDI", "loc": "N", "gf": 5, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-06-02", "opp": "MADAGASCAR", "loc": "N", "gf": 4, "ga": 0, "xg": 3.6, "xga": 0.25, "xg_adj": 3.096, "xga_adj": 0.291, "big_chances": 8.0, "shots": 20.0}, {"date": "2026-06-07", "opp": "NORWAY", "loc": "N", "gf": 1, "ga": 1, "xg": 1.29, "xga": 0.8, "xg_adj": 1.338, "xga_adj": 0.772, "big_chances": 3.0, "shots": 13.0}]}, {"code": "HAI", "name": "Haiti", "group": "C", "elo": 1532.0, "fifa_rank": 83, "is_host": false, "feat": {"xg_for_roll": 1.22, "xga_roll": 1.145, "big_chance_rate": 2.0, "form_points": 0.435, "goals_for_roll": 1.6, "goals_against_roll": 0.8, "shots_for_roll": 8.75, "finishing": 0.33, "gk_perf": -0.305, "n_xg": 2, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "NICARAGUA", "loc": "T", "gf": 2, "ga": 0, "xg": 1.65, "xga": 0.4, "xg_adj": 1.388, "xga_adj": 0.475, "big_chances": 3.0, "shots": 9.0}, {"date": "2026-03-29", "opp": "TUNESIA", "loc": "N", "gf": 0, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 9.0}, {"date": "2026-03-31", "opp": "ICELAND", "loc": "N", "gf": 1, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 9.0}, {"date": "2026-06-03", "opp": "NZL", "loc": "N", "gf": 4, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-06-06", "opp": "PERU", "loc": "N", "gf": 1, "ga": 2, "xg": 0.69, "xga": 0.99, "xg_adj": 0.655, "xga_adj": 1.043, "big_chances": 2.0, "shots": 8.0}]}, {"code": "SCO", "name": "Scotland", "group": "C", "elo": 1767.0, "fifa_rank": 38, "is_host": false, "feat": {"xg_for_roll": 1.46, "xga_roll": 1.391, "big_chance_rate": 2.1, "form_points": 0.64, "goals_for_roll": 2.4, "goals_against_roll": 1.0, "shots_for_roll": 14.0, "finishing": 0.664, "gk_perf": 0.452, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "DENMARK", "loc": "T", "gf": 4, "ga": 2, "xg": 1.76, "xga": 2.19, "xg_adj": 1.76, "xga_adj": 2.19, "big_chances": 2.0, "shots": 10.0}, {"date": "2026-03-28", "opp": "JAPAN", "loc": "N", "gf": 0, "ga": 1, "xg": 0.89, "xga": 2.13, "xg_adj": 0.921, "xga_adj": 2.059, "big_chances": 1.0, "shots": 8.0}, {"date": "2026-03-31", "opp": "IVOORKUST", "loc": "N", "gf": 0, "ga": 1, "xg": 0.92, "xga": 2.01, "xg_adj": 0.881, "xga_adj": 2.098, "big_chances": 1.0, "shots": 14.0}, {"date": "2026-05-30", "opp": "CURACAO", "loc": "N", "gf": 4, "ga": 1, "xg": 1.99, "xga": 0.71, "xg_adj": 1.738, "xga_adj": 0.813, "big_chances": 3.0, "shots": 18.0}, {"date": "2026-06-06", "opp": "BOLIVIA", "loc": "N", "gf": 4, "ga": 0, "xg": 3.12, "xga": 0.22, "xg_adj": 2.797, "xga_adj": 0.245, "big_chances": 5.0, "shots": 20.0}]}, {"code": "USA", "name": "United States", "group": "D", "elo": 1721.0, "fifa_rank": 15, "is_host": true, "feat": {"xg_for_roll": 1.306, "xga_roll": 1.315, "big_chance_rate": 2.0, "form_points": 0.37, "goals_for_roll": 2.2, "goals_against_roll": 2.4, "shots_for_roll": 13.4, "finishing": 0.928, "gk_perf": -1.028, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "URUGUAY", "loc": "T", "gf": 5, "ga": 1, "xg": 0.74, "xga": 0.59, "xg_adj": 0.762, "xga_adj": 0.573, "big_chances": 3.0, "shots": 10.0}, {"date": "2026-03-28", "opp": "BELGIUM", "loc": "N", "gf": 2, "ga": 5, "xg": 1.33, "xga": 2.34, "xg_adj": 1.359, "xga_adj": 2.29, "big_chances": 3.0, "shots": 12.0}, {"date": "2026-04-01", "opp": "PORTUGAL", "loc": "N", "gf": 0, "ga": 2, "xg": 0.68, "xga": 0.73, "xg_adj": 0.721, "xga_adj": 0.689, "big_chances": 0.0, "shots": 12.0}, {"date": "2026-05-31", "opp": "SENEGAL", "loc": "T", "gf": 3, "ga": 2, "xg": 2.62, "xga": 1.66, "xg_adj": 2.688, "xga_adj": 1.618, "big_chances": 5.0, "shots": 17.0}, {"date": "2026-06-06", "opp": "GERMANY", "loc": "T", "gf": 1, "ga": 2, "xg": 0.99, "xga": 1.54, "xg_adj": 1.03, "xga_adj": 1.48, "big_chances": 0.0, "shots": 16.0}]}, {"code": "PAR", "name": "Paraguay", "group": "D", "elo": 1833.0, "fifa_rank": 40, "is_host": false, "feat": {"xg_for_roll": 1.235, "xga_roll": 1.347, "big_chance_rate": 2.0, "form_points": 0.63, "goals_for_roll": 1.8, "goals_against_roll": 1.0, "shots_for_roll": 11.8, "finishing": 0.213, "gk_perf": -0.237, "n_xg": 3, "n_matches": 5}, "matches": [{"date": "0001-11-15", "opp": "USA", "loc": "U", "gf": 1, "ga": 2, "xg": 0.7, "xga": 1.11, "xg_adj": 0.681, "xga_adj": 1.14, "big_chances": 1.0, "shots": 8.0}, {"date": "2025-11-19", "opp": "MEXICO", "loc": "U", "gf": 2, "ga": 1, "xg": 1.75, "xga": 2.07, "xg_adj": 1.784, "xga_adj": 2.031, "big_chances": 4.0, "shots": 14.0}, {"date": "2026-03-27", "opp": "GREECE", "loc": "N", "gf": 1, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 9.0}, {"date": "2026-03-31", "opp": "MAROKKO", "loc": "N", "gf": 1, "ga": 2, "xg": 0.91, "xga": 1.11, "xg_adj": 0.916, "xga_adj": 1.102, "big_chances": 2.0, "shots": 11.0}, {"date": "2026-06-06", "opp": "NICARAGUA", "loc": "N", "gf": 4, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 17.0}]}, {"code": "AUS", "name": "Australia", "group": "D", "elo": 1783.0, "fifa_rank": 27, "is_host": false, "feat": {"xg_for_roll": 1.116, "xga_roll": 1.124, "big_chance_rate": 2.1, "form_points": 0.45, "goals_for_roll": 1.4, "goals_against_roll": 1.2, "shots_for_roll": 6.4, "finishing": 0.428, "gk_perf": -0.244, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "COLOMBIA", "loc": "N", "gf": 0, "ga": 3, "xg": 0.13, "xga": 1.84, "xg_adj": 0.137, "xga_adj": 1.74, "big_chances": 3.0, "shots": 2.0}, {"date": "2026-03-27", "opp": "KAMEROEN", "loc": "T", "gf": 1, "ga": 0, "xg": 1.59, "xga": 0.26, "xg_adj": 1.536, "xga_adj": 0.269, "big_chances": 2.0, "shots": 8.0}, {"date": "2026-03-31", "opp": "CURACAO", "loc": "T", "gf": 5, "ga": 1, "xg": 1.55, "xga": 0.67, "xg_adj": 1.354, "xga_adj": 0.767, "big_chances": 4.0, "shots": 11.0}, {"date": "2026-05-31", "opp": "MEXICO", "loc": "N", "gf": 0, "ga": 1, "xg": 0.56, "xga": 0.59, "xg_adj": 0.571, "xga_adj": 0.579, "big_chances": 2.0, "shots": 7.0}, {"date": "2026-06-06", "opp": "SWITZERLAND", "loc": "N", "gf": 1, "ga": 1, "xg": 1.03, "xga": 1.42, "xg_adj": 1.06, "xga_adj": 1.379, "big_chances": 1.0, "shots": 4.0}]}, {"code": "TUR", "name": "Turkey", "group": "D", "elo": 1902.0, "fifa_rank": 25, "is_host": false, "feat": {"xg_for_roll": 1.478, "xga_roll": 1.159, "big_chance_rate": 1.9, "form_points": 0.906, "goals_for_roll": 2.0, "goals_against_roll": 0.6, "shots_for_roll": 15.2, "finishing": 0.3, "gk_perf": 0.446, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "SPAIN", "loc": "U", "gf": 2, "ga": 2, "xg": 1.14, "xga": 2.58, "xg_adj": 1.274, "xga_adj": 2.309, "big_chances": 1.0, "shots": 13.0}, {"date": "2026-03-26", "opp": "ROMENIA", "loc": "T", "gf": 1, "ga": 0, "xg": 1.4, "xga": 0.47, "xg_adj": 1.353, "xga_adj": 0.486, "big_chances": 1.0, "shots": 16.0}, {"date": "2026-03-31", "opp": "KOSOVO", "loc": "U", "gf": 1, "ga": 0, "xg": 1.77, "xga": 0.88, "xg_adj": 1.68, "xga_adj": 0.927, "big_chances": 1.0, "shots": 12.0}, {"date": "2026-06-01", "opp": "NOORD-MACEDONIE", "loc": "N", "gf": 4, "ga": 0, "xg": 2.67, "xga": 0.87, "xg_adj": 2.534, "xga_adj": 0.917, "big_chances": 4.0, "shots": 19.0}, {"date": "2026-06-07", "opp": "VENEZUELA", "loc": "N", "gf": 2, "ga": 1, "xg": 1.52, "xga": 0.43, "xg_adj": 1.443, "xga_adj": 0.453, "big_chances": 3.0, "shots": 16.0}]}, {"code": "GER", "name": "Germany", "group": "E", "elo": 1923.0, "fifa_rank": 10, "is_host": false, "feat": {"xg_for_roll": 2.077, "xga_roll": 0.954, "big_chance_rate": 4.0, "form_points": 1.0, "goals_for_roll": 3.6, "goals_against_roll": 1.0, "shots_for_roll": 20.2, "finishing": 0.628, "gk_perf": -0.414, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-17", "opp": "SLOWAKIA", "loc": "T", "gf": 6, "ga": 0, "xg": 4.02, "xga": 0.39, "xg_adj": 3.884, "xga_adj": 0.404, "big_chances": 7.0, "shots": 22.0}, {"date": "2026-03-27", "opp": "SWITZERLAND", "loc": "U", "gf": 4, "ga": 3, "xg": 2.63, "xga": 0.59, "xg_adj": 2.707, "xga_adj": 0.573, "big_chances": 8.0, "shots": 22.0}, {"date": "2026-03-30", "opp": "GHANA", "loc": "N", "gf": 2, "ga": 1, "xg": 2.9, "xga": 0.56, "xg_adj": 2.605, "xga_adj": 0.623, "big_chances": 8.0, "shots": 23.0}, {"date": "2026-05-31", "opp": "FINLAND", "loc": "N", "gf": 4, "ga": 0, "xg": 3.77, "xga": 0.4, "xg_adj": 3.578, "xga_adj": 0.421, "big_chances": 7.0, "shots": 22.0}, {"date": "2026-06-06", "opp": "USA", "loc": "N", "gf": 2, "ga": 1, "xg": 1.54, "xga": 0.99, "xg_adj": 1.499, "xga_adj": 1.017, "big_chances": 1.0, "shots": 12.0}]}, {"code": "CUW", "name": "Curacao", "group": "E", "elo": 1436.0, "fifa_rank": 81, "is_host": false, "feat": {"xg_for_roll": 0.994, "xga_roll": 1.327, "big_chance_rate": 1.556, "form_points": 0.317, "goals_for_roll": 1.2, "goals_against_roll": 2.2, "shots_for_roll": 10.0, "finishing": -0.14, "gk_perf": -1.438, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "JAMAICA", "loc": "U", "gf": 0, "ga": 0, "xg": 0.84, "xga": 1.04, "xg_adj": 0.768, "xga_adj": 1.138, "big_chances": 0.0, "shots": 16.0}, {"date": "2026-03-27", "opp": "CHINA", "loc": "N", "gf": 0, "ga": 2, "xg": 0.34, "xga": 0.67, "xg_adj": 0.311, "xga_adj": 0.733, "big_chances": 1.0, "shots": 8.0}, {"date": "2026-03-31", "opp": "AUSTRALIA", "loc": "N", "gf": 1, "ga": 5, "xg": 0.67, "xga": 1.55, "xg_adj": 0.666, "xga_adj": 1.559, "big_chances": 3.0, "shots": 7.0}, {"date": "2026-05-30", "opp": "SCOTLAND", "loc": "N", "gf": 1, "ga": 4, "xg": 0.71, "xga": 1.99, "xg_adj": 0.702, "xga_adj": 2.012, "big_chances": 1.0, "shots": 9.0}, {"date": "2026-06-07", "opp": "ARUBA", "loc": "N", "gf": 4, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}]}, {"code": "CIV", "name": "Ivory Coast", "group": "E", "elo": 1676.0, "fifa_rank": 37, "is_host": false, "feat": {"xg_for_roll": 1.609, "xga_roll": 1.057, "big_chance_rate": 2.8, "form_points": 0.834, "goals_for_roll": 2.4, "goals_against_roll": 0.8, "shots_for_roll": 13.2, "finishing": 0.454, "gk_perf": 0.012, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2026-01-06", "opp": "BURKINA FASO", "loc": "T", "gf": 3, "ga": 0, "xg": 2.02, "xga": 0.41, "xg_adj": 1.882, "xga_adj": 0.44, "big_chances": 3.0, "shots": 21.0}, {"date": "2026-01-10", "opp": "EGYPT", "loc": "U", "gf": 2, "ga": 3, "xg": 1.17, "xga": 0.78, "xg_adj": 1.126, "xga_adj": 0.81, "big_chances": 3.0, "shots": 13.0}, {"date": "2026-03-28", "opp": "SOUTH-KOREA", "loc": "N", "gf": 4, "ga": 0, "xg": 3.22, "xga": 1.07, "xg_adj": 3.168, "xga_adj": 1.087, "big_chances": 7.0, "shots": 13.0}, {"date": "2026-03-31", "opp": "SCOTLAND", "loc": "N", "gf": 1, "ga": 0, "xg": 2.01, "xga": 0.92, "xg_adj": 1.988, "xga_adj": 0.93, "big_chances": 2.0, "shots": 12.0}, {"date": "2026-06-04", "opp": "FRANCE", "loc": "N", "gf": 2, "ga": 1, "xg": 1.31, "xga": 0.88, "xg_adj": 1.43, "xga_adj": 0.806, "big_chances": 4.0, "shots": 7.0}]}, {"code": "ECU", "name": "Ecuador", "group": "E", "elo": 1933.0, "fifa_rank": 23, "is_host": false, "feat": {"xg_for_roll": 1.483, "xga_roll": 1.01, "big_chance_rate": 2.2, "form_points": 0.76, "goals_for_roll": 1.8, "goals_against_roll": 0.6, "shots_for_roll": 15.4, "finishing": 0.034, "gk_perf": 0.088, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "NZL", "loc": "N", "gf": 2, "ga": 0, "xg": 2.69, "xga": 0.46, "xg_adj": 2.492, "xga_adj": 0.496, "big_chances": 2.0, "shots": 24.0}, {"date": "2026-03-27", "opp": "MAROKKO", "loc": "U", "gf": 1, "ga": 1, "xg": 0.49, "xga": 1.37, "xg_adj": 0.493, "xga_adj": 1.36, "big_chances": 1.0, "shots": 8.0}, {"date": "2026-03-31", "opp": "NETHERLANDS", "loc": "U", "gf": 1, "ga": 1, "xg": 1.58, "xga": 0.13, "xg_adj": 1.663, "xga_adj": 0.123, "big_chances": 2.0, "shots": 16.0}, {"date": "2026-05-31", "opp": "SAUDI-ARABIA", "loc": "N", "gf": 2, "ga": 1, "xg": 1.42, "xga": 1.21, "xg_adj": 1.307, "xga_adj": 1.314, "big_chances": 3.0, "shots": 11.0}, {"date": "2026-06-07", "opp": "GUATEMALA", "loc": "N", "gf": 3, "ga": 0, "xg": 2.65, "xga": 0.27, "xg_adj": 2.375, "xga_adj": 0.301, "big_chances": 5.0, "shots": 18.0}]}, {"code": "NED", "name": "Netherlands", "group": "F", "elo": 1961.0, "fifa_rank": 7, "is_host": false, "feat": {"xg_for_roll": 1.81, "xga_roll": 1.11, "big_chance_rate": 3.2, "form_points": 0.641, "goals_for_roll": 1.8, "goals_against_roll": 0.8, "shots_for_roll": 13.6, "finishing": -0.634, "gk_perf": 0.108, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-17", "opp": "LITHUANIA", "loc": "N", "gf": 4, "ga": 0, "xg": 3.16, "xga": 0.67, "xg_adj": 2.659, "xga_adj": 0.796, "big_chances": 6.0, "shots": 20.0}, {"date": "2026-03-27", "opp": "NORWAY", "loc": "T", "gf": 2, "ga": 1, "xg": 2.07, "xga": 0.83, "xg_adj": 2.146, "xga_adj": 0.8, "big_chances": 5.0, "shots": 14.0}, {"date": "2026-03-31", "opp": "ECUADOR", "loc": "T", "gf": 1, "ga": 1, "xg": 0.13, "xga": 1.58, "xg_adj": 0.136, "xga_adj": 1.514, "big_chances": 1.0, "shots": 2.0}, {"date": "2026-06-03", "opp": "ALGERIA", "loc": "T", "gf": 0, "ga": 1, "xg": 2.19, "xga": 0.48, "xg_adj": 2.148, "xga_adj": 0.489, "big_chances": 3.0, "shots": 17.0}, {"date": "2026-06-08", "opp": "OEZBEKISTAN", "loc": "N", "gf": 2, "ga": 1, "xg": 4.62, "xga": 0.98, "xg_adj": 4.507, "xga_adj": 1.005, "big_chances": 8.0, "shots": 15.0}]}, {"code": "JPN", "name": "Japan", "group": "F", "elo": 1904.0, "fifa_rank": 19, "is_host": false, "feat": {"xg_for_roll": 1.262, "xga_roll": 0.94, "big_chance_rate": 1.9, "form_points": 1.0, "goals_for_roll": 1.6, "goals_against_roll": 0.0, "shots_for_roll": 12.4, "finishing": 0.31, "gk_perf": 0.568, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-14", "opp": "GHANA", "loc": "N", "gf": 2, "ga": 0, "xg": 1.0, "xga": 0.36, "xg_adj": 0.898, "xga_adj": 0.401, "big_chances": 1.0, "shots": 14.0}, {"date": "2025-11-18", "opp": "BOLIVIA", "loc": "N", "gf": 3, "ga": 0, "xg": 1.71, "xga": 0.36, "xg_adj": 1.533, "xga_adj": 0.402, "big_chances": 3.0, "shots": 8.0}, {"date": "2026-03-28", "opp": "SCOTLAND", "loc": "N", "gf": 1, "ga": 0, "xg": 2.13, "xga": 0.89, "xg_adj": 2.106, "xga_adj": 0.9, "big_chances": 3.0, "shots": 18.0}, {"date": "2026-03-31", "opp": "ENGLAND", "loc": "N", "gf": 1, "ga": 0, "xg": 0.58, "xga": 0.89, "xg_adj": 0.622, "xga_adj": 0.831, "big_chances": 1.0, "shots": 7.0}, {"date": "2026-05-31", "opp": "ICELAND", "loc": "N", "gf": 1, "ga": 0, "xg": 1.03, "xga": 0.34, "xg_adj": 0.96, "xga_adj": 0.365, "big_chances": 2.0, "shots": 15.0}]}, {"code": "SWE", "name": "Sweden", "group": "F", "elo": 1719.0, "fifa_rank": 42, "is_host": false, "feat": {"xg_for_roll": 1.31, "xga_roll": 1.506, "big_chance_rate": 1.7, "form_points": 0.497, "goals_for_roll": 2.0, "goals_against_roll": 1.8, "shots_for_roll": 10.4, "finishing": 0.654, "gk_perf": -0.108, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "SLOVENIA", "loc": "T", "gf": 1, "ga": 1, "xg": 0.64, "xga": 2.13, "xg_adj": 0.607, "xga_adj": 2.244, "big_chances": 0.0, "shots": 11.0}, {"date": "2026-03-26", "opp": "UKRAINE", "loc": "N", "gf": 3, "ga": 1, "xg": 2.38, "xga": 0.76, "xg_adj": 2.34, "xga_adj": 0.773, "big_chances": 2.0, "shots": 10.0}, {"date": "2026-03-31", "opp": "POLEN", "loc": "N", "gf": 3, "ga": 2, "xg": 1.65, "xga": 1.53, "xg_adj": 1.622, "xga_adj": 1.556, "big_chances": 2.0, "shots": 9.0}, {"date": "2026-06-01", "opp": "NORWAY", "loc": "N", "gf": 1, "ga": 3, "xg": 0.49, "xga": 2.73, "xg_adj": 0.508, "xga_adj": 2.633, "big_chances": 1.0, "shots": 9.0}, {"date": "2026-06-04", "opp": "GREECE", "loc": "N", "gf": 2, "ga": 2, "xg": 1.57, "xga": 1.31, "xg_adj": 1.517, "xga_adj": 1.356, "big_chances": 3.0, "shots": 13.0}]}, {"code": "TUN", "name": "Tunisia", "group": "F", "elo": 1636.0, "fifa_rank": 47, "is_host": false, "feat": {"xg_for_roll": 1.015, "xga_roll": 1.524, "big_chance_rate": 1.444, "form_points": 0.277, "goals_for_roll": 0.4, "goals_against_roll": 1.4, "shots_for_roll": 9.2, "finishing": -0.425, "gk_perf": 0.055, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2026-01-03", "opp": "MALI", "loc": "N", "gf": 1, "ga": 1, "xg": 1.11, "xga": 1.15, "xg_adj": 1.034, "xga_adj": 1.234, "big_chances": 1.0, "shots": 13.0}, {"date": "2026-03-29", "opp": "HAITI", "loc": "N", "gf": 1, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 7.0}, {"date": "2026-04-01", "opp": "CANADA", "loc": "N", "gf": 0, "ga": 0, "xg": 0.29, "xga": 0.88, "xg_adj": 0.288, "xga_adj": 0.885, "big_chances": 1.0, "shots": 5.0}, {"date": "2026-06-01", "opp": "AUSTRIA", "loc": "N", "gf": 0, "ga": 1, "xg": 1.01, "xga": 1.33, "xg_adj": 1.019, "xga_adj": 1.318, "big_chances": 2.0, "shots": 14.0}, {"date": "2026-06-06", "opp": "BELGIUM", "loc": "N", "gf": 0, "ga": 5, "xg": 0.29, "xga": 3.86, "xg_adj": 0.296, "xga_adj": 3.777, "big_chances": 0.0, "shots": 7.0}]}, {"code": "BEL", "name": "Belgium", "group": "G", "elo": 1866.0, "fifa_rank": 9, "is_host": false, "feat": {"xg_for_roll": 1.59, "xga_roll": 1.024, "big_chance_rate": 2.5, "form_points": 0.87, "goals_for_roll": 4.0, "goals_against_roll": 0.6, "shots_for_roll": 16.8, "finishing": 1.904, "gk_perf": 0.148, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "LIECHTENSTEIN", "loc": "T", "gf": 7, "ga": 0, "xg": 3.07, "xga": 0.04, "xg_adj": 2.222, "xga_adj": 0.055, "big_chances": 6.0, "shots": 23.0}, {"date": "2026-03-28", "opp": "USA", "loc": "N", "gf": 5, "ga": 2, "xg": 2.34, "xga": 1.33, "xg_adj": 2.278, "xga_adj": 1.366, "big_chances": 3.0, "shots": 21.0}, {"date": "2026-04-01", "opp": "MEXICO", "loc": "N", "gf": 1, "ga": 1, "xg": 0.29, "xga": 0.9, "xg_adj": 0.296, "xga_adj": 0.883, "big_chances": 0.0, "shots": 5.0}, {"date": "2026-06-02", "opp": "CROATIA", "loc": "N", "gf": 2, "ga": 0, "xg": 0.92, "xga": 1.18, "xg_adj": 0.959, "xga_adj": 1.132, "big_chances": 2.0, "shots": 8.0}, {"date": "2026-06-06", "opp": "TUNESIA", "loc": "N", "gf": 5, "ga": 0, "xg": 3.86, "xga": 0.29, "xg_adj": 3.645, "xga_adj": 0.307, "big_chances": 5.0, "shots": 27.0}]}, {"code": "EGY", "name": "Egypt", "group": "G", "elo": 1689.0, "fifa_rank": 31, "is_host": false, "feat": {"xg_for_roll": 0.959, "xga_roll": 1.225, "big_chance_rate": 1.8, "form_points": 0.507, "goals_for_roll": 1.2, "goals_against_roll": 0.4, "shots_for_roll": 7.6, "finishing": 0.56, "gk_perf": 0.818, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2026-01-17", "opp": "NIGERIA", "loc": "T", "gf": 0, "ga": 0, "xg": 0.29, "xga": 0.2, "xg_adj": 0.275, "xga_adj": 0.211, "big_chances": 2.0, "shots": 5.0}, {"date": "2026-03-27", "opp": "SAUDI-ARABIA", "loc": "N", "gf": 4, "ga": 0, "xg": 1.22, "xga": 0.39, "xg_adj": 1.123, "xga_adj": 0.424, "big_chances": 3.0, "shots": 13.0}, {"date": "2026-03-31", "opp": "SPAIN", "loc": "N", "gf": 0, "ga": 0, "xg": 0.15, "xga": 2.5, "xg_adj": 0.168, "xga_adj": 2.238, "big_chances": 0.0, "shots": 4.0}, {"date": "2026-05-28", "opp": "RUSSIA", "loc": "N", "gf": 1, "ga": 0, "xg": 1.12, "xga": 0.52, "xg_adj": 1.082, "xga_adj": 0.538, "big_chances": 3.0, "shots": 11.0}, {"date": "2026-06-07", "opp": "BRASIL", "loc": "N", "gf": 1, "ga": 2, "xg": 0.42, "xga": 2.48, "xg_adj": 0.445, "xga_adj": 2.339, "big_chances": 1.0, "shots": 5.0}]}, {"code": "IRN", "name": "Iran", "group": "G", "elo": 1760.0, "fifa_rank": 20, "is_host": false, "feat": {"xg_for_roll": 1.3, "xga_roll": 1.3, "big_chance_rate": 1.8, "form_points": 0.741, "goals_for_roll": 2.2, "goals_against_roll": 0.6, "shots_for_roll": 9.0, "finishing": 0.0, "gk_perf": 0.0, "n_xg": 0, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "OEZBEKISTAN", "loc": "N", "gf": 0, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-03-27", "opp": "NIGERIA", "loc": "N", "gf": 1, "ga": 2, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-03-31", "opp": "COSTA-RICA", "loc": "N", "gf": 5, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 9.0}, {"date": "2026-05-29", "opp": "GAMBIA", "loc": "N", "gf": 3, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-06-04", "opp": "MALI", "loc": "N", "gf": 2, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}]}, {"code": "NZL", "name": "New Zealand", "group": "G", "elo": 1585.0, "fifa_rank": 85, "is_host": false, "feat": {"xg_for_roll": 1.063, "xga_roll": 1.322, "big_chance_rate": 1.556, "form_points": 0.195, "goals_for_roll": 0.8, "goals_against_roll": 2.0, "shots_for_roll": 9.0, "finishing": 0.207, "gk_perf": -0.115, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "ECUADOR", "loc": "N", "gf": 0, "ga": 2, "xg": 0.46, "xga": 2.69, "xg_adj": 0.48, "xga_adj": 2.577, "big_chances": 0.0, "shots": 10.0}, {"date": "2026-03-27", "opp": "FINLAND", "loc": "N", "gf": 0, "ga": 2, "xg": 0.32, "xga": 0.72, "xg_adj": 0.304, "xga_adj": 0.759, "big_chances": 0.0, "shots": 11.0}, {"date": "2026-03-30", "opp": "CHILI", "loc": "N", "gf": 4, "ga": 1, "xg": 2.27, "xga": 0.59, "xg_adj": 2.155, "xga_adj": 0.622, "big_chances": 5.0, "shots": 12.0}, {"date": "2026-06-03", "opp": "HAITI", "loc": "N", "gf": 0, "ga": 4, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-06-06", "opp": "ENGLAND", "loc": "N", "gf": 0, "ga": 1, "xg": 0.12, "xga": 1.54, "xg_adj": 0.129, "xga_adj": 1.437, "big_chances": 0.0, "shots": 3.0}]}, {"code": "ESP", "name": "Spain", "group": "H", "elo": 2165.0, "fifa_rank": 1, "is_host": false, "feat": {"xg_for_roll": 1.614, "xga_roll": 0.938, "big_chance_rate": 2.6, "form_points": 0.623, "goals_for_roll": 1.8, "goals_against_roll": 0.8, "shots_for_roll": 16.2, "finishing": -0.154, "gk_perf": -0.232, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "TURKIYE", "loc": "T", "gf": 2, "ga": 2, "xg": 2.58, "xga": 1.14, "xg_adj": 2.667, "xga_adj": 1.103, "big_chances": 5.0, "shots": 21.0}, {"date": "2026-03-27", "opp": "SERBIA", "loc": "N", "gf": 3, "ga": 0, "xg": 1.34, "xga": 0.11, "xg_adj": 1.318, "xga_adj": 0.112, "big_chances": 2.0, "shots": 14.0}, {"date": "2026-03-31", "opp": "EGYPT", "loc": "N", "gf": 0, "ga": 0, "xg": 2.5, "xga": 0.15, "xg_adj": 2.406, "xga_adj": 0.156, "big_chances": 4.0, "shots": 25.0}, {"date": "2026-06-04", "opp": "IRAK", "loc": "N", "gf": 1, "ga": 1, "xg": 1.42, "xga": 0.21, "xg_adj": 1.42, "xga_adj": 0.21, "big_chances": 3.0, "shots": 13.0}, {"date": "2026-06-09", "opp": "PERU", "loc": "N", "gf": 3, "ga": 1, "xg": 1.93, "xga": 1.23, "xg_adj": 1.832, "xga_adj": 1.296, "big_chances": 3.0, "shots": 8.0}]}, {"code": "CPV", "name": "Cape Verde", "group": "H", "elo": 1549.0, "fifa_rank": 67, "is_host": false, "feat": {"xg_for_roll": 1.285, "xga_roll": 1.476, "big_chance_rate": 2.0, "form_points": 0.611, "goals_for_roll": 2.0, "goals_against_roll": 1.2, "shots_for_roll": 15.25, "finishing": 0.185, "gk_perf": -0.68, "n_xg": 2, "n_matches": 5}, "matches": [{"date": "2025-11-17", "opp": "EGYPT", "loc": "N", "gf": 1, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-03-27", "opp": "CHILI", "loc": "N", "gf": 2, "ga": 4, "xg": 1.73, "xga": 2.37, "xg_adj": 1.642, "xga_adj": 2.497, "big_chances": 3.0, "shots": 9.0}, {"date": "2026-03-30", "opp": "FINLAND", "loc": "N", "gf": 1, "ga": 1, "xg": 0.9, "xga": 1.27, "xg_adj": 0.854, "xga_adj": 1.338, "big_chances": 2.0, "shots": 15.0}, {"date": "2026-05-31", "opp": "SERBIA", "loc": "N", "gf": 3, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 9.0}, {"date": "2026-06-06", "opp": "BERMUDA", "loc": "N", "gf": 3, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 28.0}]}, {"code": "KSA", "name": "Saudi Arabia", "group": "H", "elo": 1568.0, "fifa_rank": 61, "is_host": false, "feat": {"xg_for_roll": 1.18, "xga_roll": 1.21, "big_chance_rate": 2.1, "form_points": 0.319, "goals_for_roll": 1.0, "goals_against_roll": 1.6, "shots_for_roll": 10.2, "finishing": -0.104, "gk_perf": -0.496, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2026-03-27", "opp": "EGYPT", "loc": "N", "gf": 0, "ga": 4, "xg": 0.39, "xga": 1.22, "xg_adj": 0.375, "xga_adj": 1.267, "big_chances": 1.0, "shots": 7.0}, {"date": "2026-03-31", "opp": "SERBIA", "loc": "N", "gf": 1, "ga": 2, "xg": 1.44, "xga": 2.22, "xg_adj": 1.416, "xga_adj": 2.258, "big_chances": 2.0, "shots": 3.0}, {"date": "2026-05-31", "opp": "ECUADOR", "loc": "N", "gf": 1, "ga": 2, "xg": 1.21, "xga": 1.42, "xg_adj": 1.263, "xga_adj": 1.361, "big_chances": 3.0, "shots": 12.0}, {"date": "2026-06-06", "opp": "PUERTO RICO", "loc": "N", "gf": 3, "ga": 0, "xg": 1.35, "xga": 0.25, "xg_adj": 1.085, "xga_adj": 0.311, "big_chances": 3.0, "shots": 20.0}, {"date": "2026-06-10", "opp": "SENEGAL", "loc": "N", "gf": 0, "ga": 0, "xg": 1.13, "xga": 0.41, "xg_adj": 1.16, "xga_adj": 0.4, "big_chances": 3.0, "shots": 9.0}]}, {"code": "URU", "name": "Uruguay", "group": "H", "elo": 1892.0, "fifa_rank": 17, "is_host": false, "feat": {"xg_for_roll": 1.14, "xga_roll": 1.068, "big_chance_rate": 1.6, "form_points": 0.362, "goals_for_roll": 0.8, "goals_against_roll": 1.4, "shots_for_roll": 9.0, "finishing": -0.178, "gk_perf": -0.546, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-10-13", "opp": "OEZBEKISTAN", "loc": "N", "gf": 2, "ga": 1, "xg": 1.96, "xga": 0.73, "xg_adj": 1.912, "xga_adj": 0.748, "big_chances": 3.0, "shots": 13.0}, {"date": "2025-11-16", "opp": "MEXICO", "loc": "N", "gf": 0, "ga": 0, "xg": 0.08, "xga": 0.49, "xg_adj": 0.082, "xga_adj": 0.481, "big_chances": 0.0, "shots": 3.0}, {"date": "2025-11-19", "opp": "USA", "loc": "N", "gf": 1, "ga": 5, "xg": 0.59, "xga": 0.74, "xg_adj": 0.574, "xga_adj": 0.76, "big_chances": 1.0, "shots": 9.0}, {"date": "2026-03-27", "opp": "ENGLAND", "loc": "N", "gf": 1, "ga": 1, "xg": 1.28, "xga": 1.86, "xg_adj": 1.372, "xga_adj": 1.736, "big_chances": 1.0, "shots": 9.0}, {"date": "2026-03-31", "opp": "ALGERIA", "loc": "N", "gf": 0, "ga": 0, "xg": 0.98, "xga": 0.45, "xg_adj": 0.961, "xga_adj": 0.459, "big_chances": 2.0, "shots": 11.0}]}, {"code": "FRA", "name": "France", "group": "I", "elo": 2082.0, "fifa_rank": 3, "is_host": false, "feat": {"xg_for_roll": 1.512, "xga_roll": 1.218, "big_chance_rate": 2.2, "form_points": 0.771, "goals_for_roll": 2.4, "goals_against_roll": 1.2, "shots_for_roll": 16.0, "finishing": 0.594, "gk_perf": -0.056, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-16", "opp": "AZERBEIDZJAN", "loc": "U", "gf": 3, "ga": 1, "xg": 2.7, "xga": 0.15, "xg_adj": 2.322, "xga_adj": 0.174, "big_chances": 6.0, "shots": 17.0}, {"date": "2026-03-26", "opp": "BRASIL", "loc": "N", "gf": 2, "ga": 1, "xg": 1.29, "xga": 2.0, "xg_adj": 1.368, "xga_adj": 1.887, "big_chances": 2.0, "shots": 7.0}, {"date": "2026-03-29", "opp": "COLOMBIA", "loc": "N", "gf": 3, "ga": 1, "xg": 1.3, "xga": 1.19, "xg_adj": 1.374, "xga_adj": 1.126, "big_chances": 2.0, "shots": 14.0}, {"date": "2026-06-04", "opp": "IVOORKUST", "loc": "N", "gf": 1, "ga": 2, "xg": 0.88, "xga": 1.31, "xg_adj": 0.843, "xga_adj": 1.367, "big_chances": 1.0, "shots": 15.0}, {"date": "2026-06-08", "opp": "NORTH-IRELAND", "loc": "N", "gf": 3, "ga": 1, "xg": 2.86, "xga": 1.07, "xg_adj": 2.715, "xga_adj": 1.127, "big_chances": 2.0, "shots": 27.0}]}, {"code": "SEN", "name": "Senegal", "group": "I", "elo": 1879.0, "fifa_rank": 12, "is_host": false, "feat": {"xg_for_roll": 1.334, "xga_roll": 1.452, "big_chance_rate": 2.0, "form_points": 0.591, "goals_for_roll": 1.6, "goals_against_roll": 0.8, "shots_for_roll": 11.2, "finishing": -0.167, "gk_perf": 0.848, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2026-01-18", "opp": "MAROKKO", "loc": "N", "gf": 1, "ga": 0, "xg": 1.71, "xga": 2.17, "xg_adj": 1.722, "xga_adj": 2.155, "big_chances": 4.0, "shots": 14.0}, {"date": "2026-03-28", "opp": "PERU", "loc": "N", "gf": 2, "ga": 0, "xg": 1.89, "xga": 0.43, "xg_adj": 1.794, "xga_adj": 0.453, "big_chances": 2.0, "shots": 12.0}, {"date": "2026-03-31", "opp": "GAMBIA", "loc": "N", "gf": 3, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 16.0}, {"date": "2026-05-31", "opp": "USA", "loc": "N", "gf": 2, "ga": 3, "xg": 1.66, "xga": 2.66, "xg_adj": 1.616, "xga_adj": 2.733, "big_chances": 3.0, "shots": 7.0}, {"date": "2026-06-10", "opp": "SAUDI-ARABIA", "loc": "N", "gf": 0, "ga": 0, "xg": 0.41, "xga": 1.13, "xg_adj": 0.377, "xga_adj": 1.228, "big_chances": 0.0, "shots": 7.0}]}, {"code": "IRQ", "name": "Iraq", "group": "I", "elo": 1607.0, "fifa_rank": 58, "is_host": false, "feat": {"xg_for_roll": 1.075, "xga_roll": 1.191, "big_chance_rate": 1.875, "form_points": 0.437, "goals_for_roll": 0.8, "goals_against_roll": 1.0, "shots_for_roll": 9.4, "finishing": 0.267, "gk_perf": 0.023, "n_xg": 3, "n_matches": 5}, "matches": [{"date": "2025-12-12", "opp": "JORDANIA", "loc": "N", "gf": 0, "ga": 1, "xg": 1.25, "xga": 1.04, "xg_adj": 1.204, "xga_adj": 1.08, "big_chances": 3.0, "shots": 21.0}, {"date": "2026-04-01", "opp": "BOLIVIA", "loc": "N", "gf": 2, "ga": 1, "xg": 0.74, "xga": 0.61, "xg_adj": 0.663, "xga_adj": 0.681, "big_chances": 3.0, "shots": 6.0}, {"date": "2026-05-29", "opp": "ANDORRA", "loc": "N", "gf": 1, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 7.0}, {"date": "2026-06-04", "opp": "SPAIN", "loc": "N", "gf": 1, "ga": 1, "xg": 0.21, "xga": 1.42, "xg_adj": 0.235, "xga_adj": 1.271, "big_chances": 0.0, "shots": 3.0}, {"date": "2026-06-10", "opp": "VENEZUELA", "loc": "N", "gf": 0, "ga": 2, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 10.0}]}, {"code": "NOR", "name": "Norway", "group": "I", "elo": 1912.0, "fifa_rank": 32, "is_host": false, "feat": {"xg_for_roll": 1.302, "xga_roll": 1.222, "big_chance_rate": 2.3, "form_points": 0.525, "goals_for_roll": 1.8, "goals_against_roll": 1.0, "shots_for_roll": 10.8, "finishing": 0.508, "gk_perf": 0.178, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-16", "opp": "ITALIE", "loc": "N", "gf": 4, "ga": 1, "xg": 1.59, "xga": 1.3, "xg_adj": 1.658, "xga_adj": 1.247, "big_chances": 3.0, "shots": 13.0}, {"date": "2026-03-27", "opp": "NETHERLANDS", "loc": "N", "gf": 1, "ga": 2, "xg": 0.83, "xga": 2.07, "xg_adj": 0.874, "xga_adj": 1.966, "big_chances": 0.0, "shots": 5.0}, {"date": "2026-03-31", "opp": "SWITZERLAND", "loc": "N", "gf": 0, "ga": 0, "xg": 0.51, "xga": 0.74, "xg_adj": 0.525, "xga_adj": 0.719, "big_chances": 2.0, "shots": 5.0}, {"date": "2026-06-01", "opp": "SWEDEN", "loc": "N", "gf": 3, "ga": 1, "xg": 2.73, "xga": 0.49, "xg_adj": 2.656, "xga_adj": 0.504, "big_chances": 7.0, "shots": 22.0}, {"date": "2026-06-07", "opp": "MAROKKO", "loc": "N", "gf": 1, "ga": 1, "xg": 0.8, "xga": 1.29, "xg_adj": 0.806, "xga_adj": 1.281, "big_chances": 2.0, "shots": 9.0}]}, {"code": "ARG", "name": "Argentina", "group": "J", "elo": 2113.0, "fifa_rank": 2, "is_host": false, "feat": {"xg_for_roll": 1.446, "xga_roll": 1.034, "big_chance_rate": 2.3, "form_points": 1.0, "goals_for_roll": 2.8, "goals_against_roll": 0.2, "shots_for_roll": 11.8, "finishing": 1.04, "gk_perf": 0.496, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-14", "opp": "ANGOLA", "loc": "N", "gf": 2, "ga": 0, "xg": 1.5, "xga": 0.49, "xg_adj": 1.345, "xga_adj": 0.547, "big_chances": 2.0, "shots": 8.0}, {"date": "2026-03-28", "opp": "MAURITANIA", "loc": "N", "gf": 2, "ga": 1, "xg": 0.67, "xga": 1.07, "xg_adj": 0.588, "xga_adj": 1.218, "big_chances": 1.0, "shots": 7.0}, {"date": "2026-04-01", "opp": "ZAMBIA", "loc": "N", "gf": 5, "ga": 0, "xg": 1.63, "xga": 0.2, "xg_adj": 1.461, "xga_adj": 0.223, "big_chances": 3.0, "shots": 9.0}, {"date": "2026-06-07", "opp": "HONDURAS", "loc": "N", "gf": 2, "ga": 0, "xg": 2.52, "xga": 0.24, "xg_adj": 2.259, "xga_adj": 0.268, "big_chances": 3.0, "shots": 20.0}, {"date": "2026-06-10", "opp": "ICELAND", "loc": "N", "gf": 3, "ga": 0, "xg": 2.48, "xga": 1.48, "xg_adj": 2.311, "xga_adj": 1.588, "big_chances": 5.0, "shots": 15.0}]}, {"code": "ALG", "name": "Algeria", "group": "J", "elo": 1743.0, "fifa_rank": 28, "is_host": false, "feat": {"xg_for_roll": 0.918, "xga_roll": 1.472, "big_chance_rate": 1.111, "form_points": 0.682, "goals_for_roll": 1.8, "goals_against_roll": 0.4, "shots_for_roll": 11.0, "finishing": 0.06, "gk_perf": 1.175, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2026-01-06", "opp": "DR CONGO", "loc": "N", "gf": 1, "ga": 0, "xg": 0.7, "xga": 0.17, "xg_adj": 0.666, "xga_adj": 0.179, "big_chances": 0.0, "shots": 12.0}, {"date": "2026-01-10", "opp": "NIGERIA", "loc": "N", "gf": 0, "ga": 2, "xg": 0.13, "xga": 3.36, "xg_adj": 0.123, "xga_adj": 3.54, "big_chances": 0.0, "shots": 3.0}, {"date": "2026-03-27", "opp": "GUATEMALA", "loc": "N", "gf": 7, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 25.0}, {"date": "2026-03-31", "opp": "URUGUAY", "loc": "N", "gf": 0, "ga": 0, "xg": 0.45, "xga": 0.98, "xg_adj": 0.464, "xga_adj": 0.951, "big_chances": 1.0, "shots": 7.0}, {"date": "2026-06-03", "opp": "NETHERLANDS", "loc": "N", "gf": 1, "ga": 0, "xg": 0.48, "xga": 2.19, "xg_adj": 0.505, "xga_adj": 2.08, "big_chances": 0.0, "shots": 8.0}]}, {"code": "AUT", "name": "Austria", "group": "J", "elo": 1827.0, "fifa_rank": 24, "is_host": false, "feat": {"xg_for_roll": 1.375, "xga_roll": 0.996, "big_chance_rate": 2.3, "form_points": 0.89, "goals_for_roll": 2.0, "goals_against_roll": 0.4, "shots_for_roll": 9.4, "finishing": 0.404, "gk_perf": 0.248, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-15", "opp": "CYPRUS", "loc": "U", "gf": 2, "ga": 0, "xg": 2.51, "xga": 0.36, "xg_adj": 2.205, "xga_adj": 0.41, "big_chances": 6.0, "shots": 12.0}, {"date": "2025-11-18", "opp": "BOSNIA-HERZEGOVINA", "loc": "T", "gf": 1, "ga": 1, "xg": 1.2, "xga": 0.81, "xg_adj": 1.116, "xga_adj": 0.871, "big_chances": 2.0, "shots": 10.0}, {"date": "2026-03-27", "opp": "GHANA", "loc": "N", "gf": 5, "ga": 1, "xg": 2.55, "xga": 0.35, "xg_adj": 2.29, "xga_adj": 0.39, "big_chances": 4.0, "shots": 11.0}, {"date": "2026-03-31", "opp": "SOUTH-KOREA", "loc": "N", "gf": 1, "ga": 0, "xg": 0.39, "xga": 0.71, "xg_adj": 0.384, "xga_adj": 0.722, "big_chances": 0.0, "shots": 5.0}, {"date": "2026-06-01", "opp": "TUNESIA", "loc": "N", "gf": 1, "ga": 0, "xg": 1.33, "xga": 1.01, "xg_adj": 1.256, "xga_adj": 1.07, "big_chances": 2.0, "shots": 9.0}]}, {"code": "JOR", "name": "Jordan", "group": "J", "elo": 1690.0, "fifa_rank": 64, "is_host": false, "feat": {"xg_for_roll": 1.323, "xga_roll": 1.898, "big_chance_rate": 2.125, "form_points": 0.12, "goals_for_roll": 1.4, "goals_against_roll": 2.6, "shots_for_roll": 9.8, "finishing": -0.327, "gk_perf": -0.03, "n_xg": 3, "n_matches": 5}, "matches": [{"date": "2025-12-18", "opp": "MAROKKO", "loc": "N", "gf": 2, "ga": 3, "xg": 1.76, "xga": 3.25, "xg_adj": 1.772, "xga_adj": 3.227, "big_chances": 3.0, "shots": 13.0}, {"date": "2026-03-27", "opp": "COSTA-RICA", "loc": "N", "gf": 2, "ga": 2, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 6.0}, {"date": "2026-03-31", "opp": "NIGERIA", "loc": "N", "gf": 2, "ga": 2, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 8.0}, {"date": "2026-05-31", "opp": "SWITZERLAND", "loc": "N", "gf": 1, "ga": 4, "xg": 1.39, "xga": 3.97, "xg_adj": 1.431, "xga_adj": 3.857, "big_chances": 3.0, "shots": 12.0}, {"date": "2026-06-08", "opp": "COLOMBIA", "loc": "N", "gf": 0, "ga": 2, "xg": 0.83, "xga": 1.69, "xg_adj": 0.878, "xga_adj": 1.598, "big_chances": 2.0, "shots": 10.0}]}, {"code": "POR", "name": "Portugal", "group": "K", "elo": 1984.0, "fifa_rank": 6, "is_host": false, "feat": {"xg_for_roll": 1.677, "xga_roll": 1.141, "big_chance_rate": 2.4, "form_points": 0.729, "goals_for_roll": 2.6, "goals_against_roll": 0.8, "shots_for_roll": 20.0, "finishing": 0.398, "gk_perf": 0.134, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-13", "opp": "IRELAND", "loc": "U", "gf": 0, "ga": 2, "xg": 1.61, "xga": 2.02, "xg_adj": 1.528, "xga_adj": 2.128, "big_chances": 1.0, "shots": 27.0}, {"date": "2025-11-16", "opp": "ARMENIA", "loc": "T", "gf": 9, "ga": 1, "xg": 5.69, "xga": 0.75, "xg_adj": 5.1, "xga_adj": 0.837, "big_chances": 8.0, "shots": 34.0}, {"date": "2026-03-29", "opp": "MEXICO", "loc": "N", "gf": 0, "ga": 0, "xg": 1.4, "xga": 0.52, "xg_adj": 1.427, "xga_adj": 0.51, "big_chances": 2.0, "shots": 10.0}, {"date": "2026-04-01", "opp": "USA", "loc": "N", "gf": 2, "ga": 0, "xg": 0.73, "xga": 0.68, "xg_adj": 0.711, "xga_adj": 0.699, "big_chances": 1.0, "shots": 11.0}, {"date": "2026-06-06", "opp": "CHILI", "loc": "N", "gf": 2, "ga": 1, "xg": 1.58, "xga": 0.7, "xg_adj": 1.5, "xga_adj": 0.738, "big_chances": 3.0, "shots": 18.0}]}, {"code": "COD", "name": "DR Congo", "group": "K", "elo": 1655.0, "fifa_rank": 48, "is_host": false, "feat": {"xg_for_roll": 1.033, "xga_roll": 0.962, "big_chance_rate": 1.444, "form_points": 0.437, "goals_for_roll": 0.8, "goals_against_roll": 0.6, "shots_for_roll": 10.75, "finishing": -0.237, "gk_perf": -0.225, "n_xg": 4, "n_matches": 5}, "matches": [{"date": "2026-01-06", "opp": "ALGERIA", "loc": "N", "gf": 0, "ga": 1, "xg": 0.17, "xga": 0.7, "xg_adj": 0.167, "xga_adj": 0.714, "big_chances": 0.0, "shots": 6.0}, {"date": "2026-03-25", "opp": "BERMUDA", "loc": "N", "gf": 2, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-03-31", "opp": "JAMAICA", "loc": "N", "gf": 1, "ga": 0, "xg": 1.45, "xga": 0.3, "xg_adj": 1.326, "xga_adj": 0.328, "big_chances": 3.0, "shots": 19.0}, {"date": "2026-06-03", "opp": "DENMARK", "loc": "N", "gf": 0, "ga": 0, "xg": 0.83, "xga": 0.81, "xg_adj": 0.83, "xga_adj": 0.81, "big_chances": 1.0, "shots": 8.0}, {"date": "2026-06-09", "opp": "CHILI", "loc": "N", "gf": 1, "ga": 2, "xg": 0.5, "xga": 0.29, "xg_adj": 0.475, "xga_adj": 0.306, "big_chances": 0.0, "shots": 10.0}]}, {"code": "UZB", "name": "Uzbekistan", "group": "K", "elo": 1727.0, "fifa_rank": 52, "is_host": false, "feat": {"xg_for_roll": 1.217, "xga_roll": 1.675, "big_chance_rate": 1.571, "form_points": 0.277, "goals_for_roll": 1.2, "goals_against_roll": 1.4, "shots_for_roll": 9.0, "finishing": -0.485, "gk_perf": 0.725, "n_xg": 2, "n_matches": 5}, "matches": [{"date": "2026-01-26", "opp": "CHINA", "loc": "N", "gf": 2, "ga": 2, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": null}, {"date": "2026-03-27", "opp": "GABON", "loc": "N", "gf": 3, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 15.0}, {"date": "2026-03-30", "opp": "VENEZUELA", "loc": "N", "gf": 0, "ga": 0, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 7.0}, {"date": "2026-06-02", "opp": "CANADA", "loc": "N", "gf": 0, "ga": 2, "xg": 0.99, "xga": 0.83, "xg_adj": 0.985, "xga_adj": 0.834, "big_chances": 1.0, "shots": 6.0}, {"date": "2026-06-08", "opp": "NETHERLANDS", "loc": "N", "gf": 1, "ga": 2, "xg": 0.98, "xga": 4.62, "xg_adj": 1.032, "xga_adj": 4.389, "big_chances": 1.0, "shots": 8.0}]}, {"code": "COL", "name": "Colombia", "group": "K", "elo": 1975.0, "fifa_rank": 14, "is_host": false, "feat": {"xg_for_roll": 1.521, "xga_roll": 1.044, "big_chance_rate": 2.3, "form_points": 0.64, "goals_for_roll": 2.0, "goals_against_roll": 1.2, "shots_for_roll": 14.2, "finishing": 0.256, "gk_perf": -0.394, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-19", "opp": "AUSTRALIA", "loc": "N", "gf": 3, "ga": 0, "xg": 1.84, "xga": 0.13, "xg_adj": 1.83, "xga_adj": 0.131, "big_chances": 3.0, "shots": 16.0}, {"date": "2026-03-27", "opp": "CROATIA", "loc": "N", "gf": 1, "ga": 2, "xg": 2.07, "xga": 1.22, "xg_adj": 2.158, "xga_adj": 1.17, "big_chances": 2.0, "shots": 14.0}, {"date": "2026-03-29", "opp": "FRANCE", "loc": "N", "gf": 1, "ga": 3, "xg": 1.19, "xga": 1.3, "xg_adj": 1.299, "xga_adj": 1.191, "big_chances": 1.0, "shots": 13.0}, {"date": "2026-06-02", "opp": "COSTA-RICA", "loc": "N", "gf": 3, "ga": 1, "xg": 1.93, "xga": 0.55, "xg_adj": 1.798, "xga_adj": 0.59, "big_chances": 3.0, "shots": 14.0}, {"date": "2026-06-08", "opp": "JORDANIA", "loc": "N", "gf": 2, "ga": 0, "xg": 1.69, "xga": 0.83, "xg_adj": 1.627, "xga_adj": 0.862, "big_chances": 5.0, "shots": 14.0}]}, {"code": "ENG", "name": "England", "group": "L", "elo": 2020.0, "fifa_rank": 4, "is_host": false, "feat": {"xg_for_roll": 1.371, "xga_roll": 0.934, "big_chance_rate": 1.9, "form_points": 0.641, "goals_for_roll": 1.2, "goals_against_roll": 0.4, "shots_for_roll": 17.6, "finishing": -0.27, "gk_perf": 0.17, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-13", "opp": "SERBIA", "loc": "T", "gf": 2, "ga": 0, "xg": 1.2, "xga": 0.38, "xg_adj": 1.18, "xga_adj": 0.386, "big_chances": 2.0, "shots": 19.0}, {"date": "2025-11-16", "opp": "ALBANIA", "loc": "U", "gf": 2, "ga": 0, "xg": 1.86, "xga": 0.49, "xg_adj": 1.765, "xga_adj": 0.516, "big_chances": 3.0, "shots": 14.0}, {"date": "2026-03-27", "opp": "URUGUAY", "loc": "N", "gf": 1, "ga": 1, "xg": 1.86, "xga": 1.28, "xg_adj": 1.916, "xga_adj": 1.242, "big_chances": 2.0, "shots": 13.0}, {"date": "2026-03-31", "opp": "JAPAN", "loc": "N", "gf": 0, "ga": 1, "xg": 0.89, "xga": 0.58, "xg_adj": 0.921, "xga_adj": 0.561, "big_chances": 0.0, "shots": 19.0}, {"date": "2026-06-06", "opp": "NZL", "loc": "N", "gf": 1, "ga": 0, "xg": 1.54, "xga": 0.12, "xg_adj": 1.427, "xga_adj": 0.13, "big_chances": 3.0, "shots": 23.0}]}, {"code": "CRO", "name": "Croatia", "group": "L", "elo": 1930.0, "fifa_rank": 11, "is_host": false, "feat": {"xg_for_roll": 1.41, "xga_roll": 1.444, "big_chance_rate": 2.0, "form_points": 0.576, "goals_for_roll": 1.6, "goals_against_roll": 1.8, "shots_for_roll": 13.6, "finishing": 0.048, "gk_perf": -0.198, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-17", "opp": "MONTENEGRO", "loc": "U", "gf": 3, "ga": 2, "xg": 2.7, "xga": 0.89, "xg_adj": 2.468, "xga_adj": 0.974, "big_chances": 5.0, "shots": 17.0}, {"date": "2026-03-27", "opp": "COLOMBIA", "loc": "N", "gf": 2, "ga": 1, "xg": 1.22, "xga": 2.07, "xg_adj": 1.29, "xga_adj": 1.958, "big_chances": 2.0, "shots": 12.0}, {"date": "2026-04-01", "opp": "BRASIL", "loc": "N", "gf": 1, "ga": 3, "xg": 0.96, "xga": 2.18, "xg_adj": 1.018, "xga_adj": 2.056, "big_chances": 1.0, "shots": 12.0}, {"date": "2026-06-02", "opp": "BELGIUM", "loc": "N", "gf": 0, "ga": 2, "xg": 1.18, "xga": 0.92, "xg_adj": 1.206, "xga_adj": 0.9, "big_chances": 1.0, "shots": 5.0}, {"date": "2026-06-07", "opp": "SLOVENIA", "loc": "N", "gf": 2, "ga": 1, "xg": 1.7, "xga": 1.95, "xg_adj": 1.614, "xga_adj": 2.055, "big_chances": 2.0, "shots": 22.0}]}, {"code": "GHA", "name": "Ghana", "group": "L", "elo": 1505.0, "fifa_rank": 72, "is_host": false, "feat": {"xg_for_roll": 0.937, "xga_roll": 1.625, "big_chance_rate": 1.4, "form_points": 0.09, "goals_for_roll": 0.6, "goals_against_roll": 2.2, "shots_for_roll": 8.2, "finishing": 0.024, "gk_perf": -0.23, "n_xg": 5, "n_matches": 5}, "matches": [{"date": "2025-11-18", "opp": "SOUTH-KOREA", "loc": "N", "gf": 0, "ga": 1, "xg": 0.49, "xga": 1.23, "xg_adj": 0.482, "xga_adj": 1.25, "big_chances": 0.0, "shots": 12.0}, {"date": "2026-03-27", "opp": "AUSTRIA", "loc": "N", "gf": 1, "ga": 5, "xg": 0.35, "xga": 2.55, "xg_adj": 0.353, "xga_adj": 2.527, "big_chances": 0.0, "shots": 5.0}, {"date": "2026-03-30", "opp": "GERMANY", "loc": "N", "gf": 1, "ga": 2, "xg": 0.56, "xga": 2.9, "xg_adj": 0.583, "xga_adj": 2.787, "big_chances": 1.0, "shots": 6.0}, {"date": "2026-05-23", "opp": "MEXICO", "loc": "N", "gf": 0, "ga": 2, "xg": 0.17, "xga": 1.5, "xg_adj": 0.173, "xga_adj": 1.472, "big_chances": 0.0, "shots": 7.0}, {"date": "2026-06-02", "opp": "WALES", "loc": "N", "gf": 1, "ga": 1, "xg": 1.31, "xga": 1.67, "xg_adj": 1.275, "xga_adj": 1.716, "big_chances": 4.0, "shots": 11.0}]}, {"code": "PAN", "name": "Panama", "group": "L", "elo": 1737.0, "fifa_rank": 33, "is_host": false, "feat": {"xg_for_roll": 1.027, "xga_roll": 1.536, "big_chance_rate": 1.5, "form_points": 0.366, "goals_for_roll": 1.8, "goals_against_roll": 2.4, "shots_for_roll": 10.0, "finishing": 0.733, "gk_perf": -1.08, "n_xg": 3, "n_matches": 5}, "matches": [{"date": "2026-03-27", "opp": "SOUTH-AFRICA", "loc": "N", "gf": 1, "ga": 1, "xg": 0.23, "xga": 1.85, "xg_adj": 0.208, "xga_adj": 2.044, "big_chances": 0.0, "shots": 3.0}, {"date": "2026-03-31", "opp": "SOUTH-AFRICA", "loc": "N", "gf": 1, "ga": 2, "xg": 0.99, "xga": 0.33, "xg_adj": 0.896, "xga_adj": 0.365, "big_chances": 3.0, "shots": 11.0}, {"date": "2026-05-31", "opp": "BRASIL", "loc": "N", "gf": 2, "ga": 6, "xg": 0.58, "xga": 3.58, "xg_adj": 0.615, "xga_adj": 3.377, "big_chances": 0.0, "shots": 16.0}, {"date": "2026-06-04", "opp": "DOMINICAANSE REPUBLIEK", "loc": "N", "gf": 4, "ga": 2, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 12.0}, {"date": "2026-06-06", "opp": "BOSNIA-HERZEGOVINA", "loc": "N", "gf": 1, "ga": 1, "xg": null, "xga": null, "xg_adj": null, "xga_adj": null, "big_chances": null, "shots": 8.0}]}], "sim": [{"code": "ESP", "name": "Spain", "group": "H", "elo": 2165.0, "win_group": 0.78925, "through": 0.9926, "r16": 0.7851, "qf": 0.60955, "sf": 0.45115, "final": 0.31575, "champion": 0.2121, "exp_finish": 9.500725}, {"code": "ARG", "name": "Argentina", "group": "J", "elo": 2113.0, "win_group": 0.708, "through": 0.96885, "r16": 0.7346, "qf": 0.53515, "sf": 0.3721, "final": 0.2547, "champion": 0.1495, "exp_finish": 11.32445}, {"code": "FRA", "name": "France", "group": "I", "elo": 2082.0, "win_group": 0.5638, "through": 0.94425, "r16": 0.70505, "qf": 0.48955, "sf": 0.3277, "final": 0.1755, "champion": 0.10155, "exp_finish": 12.6462}, {"code": "ENG", "name": "England", "group": "L", "elo": 2020.0, "win_group": 0.55865, "through": 0.9547, "r16": 0.6835, "qf": 0.457, "sf": 0.2881, "final": 0.1516, "champion": 0.0748, "exp_finish": 13.1143}, {"code": "BRA", "name": "Brazil", "group": "C", "elo": 1984.0, "win_group": 0.5727, "through": 0.94665, "r16": 0.6795, "qf": 0.45035, "sf": 0.21115, "final": 0.11355, "champion": 0.05685, "exp_finish": 13.636875}, {"code": "POR", "name": "Portugal", "group": "K", "elo": 1984.0, "win_group": 0.4435, "through": 0.9038, "r16": 0.64825, "qf": 0.42475, "sf": 0.20045, "final": 0.11285, "champion": 0.05435, "exp_finish": 14.886725}, {"code": "NED", "name": "Netherlands", "group": "F", "elo": 1961.0, "win_group": 0.49975, "through": 0.9099, "r16": 0.67315, "qf": 0.4344, "sf": 0.22825, "final": 0.10855, "champion": 0.05045, "exp_finish": 14.359375}, {"code": "COL", "name": "Colombia", "group": "K", "elo": 1975.0, "win_group": 0.4241, "through": 0.89875, "r16": 0.65535, "qf": 0.4324, "sf": 0.2092, "final": 0.0973, "champion": 0.0468, "exp_finish": 14.84105}, {"code": "GER", "name": "Germany", "group": "E", "elo": 1923.0, "win_group": 0.453, "through": 0.94095, "r16": 0.69635, "qf": 0.29675, "sf": 0.164, "final": 0.0733, "champion": 0.03235, "exp_finish": 14.6738}, {"code": "ECU", "name": "Ecuador", "group": "E", "elo": 1933.0, "win_group": 0.43095, "through": 0.93335, "r16": 0.6634, "qf": 0.30545, "sf": 0.15515, "final": 0.0735, "champion": 0.0309, "exp_finish": 15.1663}, {"code": "CRO", "name": "Croatia", "group": "L", "elo": 1930.0, "win_group": 0.3326, "through": 0.89825, "r16": 0.6301, "qf": 0.2423, "sf": 0.1196, "final": 0.0545, "champion": 0.02225, "exp_finish": 16.6502}, {"code": "SUI", "name": "Switzerland", "group": "B", "elo": 1889.0, "win_group": 0.48385, "through": 0.93555, "r16": 0.73825, "qf": 0.3461, "sf": 0.14195, "final": 0.05865, "champion": 0.0214, "exp_finish": 14.060375}, {"code": "JPN", "name": "Japan", "group": "F", "elo": 1904.0, "win_group": 0.3406, "through": 0.8553, "r16": 0.6214, "qf": 0.27395, "sf": 0.1258, "final": 0.05135, "champion": 0.0214, "exp_finish": 17.238875}, {"code": "TUR", "name": "Turkey", "group": "D", "elo": 1902.0, "win_group": 0.37635, "through": 0.8037, "r16": 0.6016, "qf": 0.27725, "sf": 0.11745, "final": 0.0488, "champion": 0.0198, "exp_finish": 18.31275}, {"code": "NOR", "name": "Norway", "group": "I", "elo": 1912.0, "win_group": 0.2308, "through": 0.7939, "r16": 0.5612, "qf": 0.2357, "sf": 0.11765, "final": 0.04825, "champion": 0.0197, "exp_finish": 19.203975}, {"code": "URU", "name": "Uruguay", "group": "H", "elo": 1892.0, "win_group": 0.18165, "through": 0.8798, "r16": 0.66215, "qf": 0.29485, "sf": 0.1142, "final": 0.04685, "champion": 0.0184, "exp_finish": 16.277025}, {"code": "BEL", "name": "Belgium", "group": "G", "elo": 1866.0, "win_group": 0.49335, "through": 0.8931, "r16": 0.4919, "qf": 0.23295, "sf": 0.1015, "final": 0.03945, "champion": 0.0144, "exp_finish": 18.531825}, {"code": "SEN", "name": "Senegal", "group": "I", "elo": 1879.0, "win_group": 0.18035, "through": 0.73765, "r16": 0.51325, "qf": 0.23245, "sf": 0.09295, "final": 0.0344, "champion": 0.01235, "exp_finish": 20.8011}, {"code": "MEX", "name": "Mexico", "group": "A", "elo": 1858.0, "win_group": 0.5425, "through": 0.9241, "r16": 0.3615, "qf": 0.173, "sf": 0.0749, "final": 0.02935, "champion": 0.0097, "exp_finish": 20.059975}, {"code": "AUT", "name": "Austria", "group": "J", "elo": 1827.0, "win_group": 0.16675, "through": 0.7316, "r16": 0.2183, "qf": 0.10515, "sf": 0.04595, "final": 0.01655, "champion": 0.00625, "exp_finish": 25.374975}, {"code": "MAR", "name": "Morocco", "group": "C", "elo": 1821.0, "win_group": 0.24655, "through": 0.8107, "r16": 0.24085, "qf": 0.1156, "sf": 0.04525, "final": 0.01575, "champion": 0.00535, "exp_finish": 23.780275}, {"code": "PAR", "name": "Paraguay", "group": "D", "elo": 1833.0, "win_group": 0.2445, "through": 0.69375, "r16": 0.2014, "qf": 0.08795, "sf": 0.0372, "final": 0.01135, "champion": 0.0036, "exp_finish": 26.323275}, {"code": "CAN", "name": "Canada", "group": "B", "elo": 1784.0, "win_group": 0.404, "through": 0.914, "r16": 0.2454, "qf": 0.11045, "sf": 0.03705, "final": 0.0113, "champion": 0.0033, "exp_finish": 22.1371}, {"code": "AUS", "name": "Australia", "group": "D", "elo": 1783.0, "win_group": 0.18555, "through": 0.61775, "r16": 0.17675, "qf": 0.081, "sf": 0.0228, "final": 0.008, "champion": 0.00185, "exp_finish": 27.92675}, {"code": "SCO", "name": "Scotland", "group": "C", "elo": 1767.0, "win_group": 0.1583, "through": 0.69435, "r16": 0.19255, "qf": 0.0864, "sf": 0.0242, "final": 0.0069, "champion": 0.0017, "exp_finish": 26.47675}, {"code": "KOR", "name": "South Korea", "group": "A", "elo": 1752.0, "win_group": 0.2159, "through": 0.73275, "r16": 0.2173, "qf": 0.0851, "sf": 0.02495, "final": 0.00655, "champion": 0.0015, "exp_finish": 25.571625}, {"code": "PAN", "name": "Panama", "group": "L", "elo": 1737.0, "win_group": 0.0921, "through": 0.61775, "r16": 0.16885, "qf": 0.04865, "sf": 0.01315, "final": 0.00375, "champion": 0.00115, "exp_finish": 28.251675}, {"code": "CZE", "name": "Czechia", "group": "A", "elo": 1726.0, "win_group": 0.19185, "through": 0.71115, "r16": 0.21115, "qf": 0.05545, "sf": 0.01785, "final": 0.0042, "champion": 0.001, "exp_finish": 26.19425}, {"code": "USA", "name": "United States", "group": "D", "elo": 1721.0, "win_group": 0.1936, "through": 0.6235, "r16": 0.18425, "qf": 0.04455, "sf": 0.0137, "final": 0.00345, "champion": 0.00085, "exp_finish": 27.998575}, {"code": "ALG", "name": "Algeria", "group": "J", "elo": 1743.0, "win_group": 0.0732, "through": 0.5107, "r16": 0.1352, "qf": 0.04205, "sf": 0.0119, "final": 0.00275, "champion": 0.00075, "exp_finish": 30.413525}, {"code": "SWE", "name": "Sweden", "group": "F", "elo": 1719.0, "win_group": 0.1055, "through": 0.55075, "r16": 0.1594, "qf": 0.0366, "sf": 0.01125, "final": 0.00305, "champion": 0.00065, "exp_finish": 29.516625}, {"code": "IRN", "name": "Iran", "group": "G", "elo": 1760.0, "win_group": 0.26855, "through": 0.77755, "r16": 0.1872, "qf": 0.07265, "sf": 0.0186, "final": 0.0043, "champion": 0.0006, "exp_finish": 25.31405}, {"code": "CIV", "name": "Ivory Coast", "group": "E", "elo": 1676.0, "win_group": 0.10475, "through": 0.65125, "r16": 0.196, "qf": 0.0514, "sf": 0.01265, "final": 0.00365, "champion": 0.00055, "exp_finish": 27.375625}, {"code": "UZB", "name": "Uzbekistan", "group": "K", "elo": 1727.0, "win_group": 0.07825, "through": 0.4815, "r16": 0.1229, "qf": 0.0307, "sf": 0.0083, "final": 0.0018, "champion": 0.0005, "exp_finish": 31.1089}, {"code": "EGY", "name": "Egypt", "group": "G", "elo": 1689.0, "win_group": 0.1619, "through": 0.6241, "r16": 0.1725, "qf": 0.03855, "sf": 0.01145, "final": 0.00235, "champion": 0.00045, "exp_finish": 28.174775}, {"code": "COD", "name": "DR Congo", "group": "K", "elo": 1655.0, "win_group": 0.05415, "through": 0.3833, "r16": 0.1006, "qf": 0.02205, "sf": 0.00505, "final": 0.00105, "champion": 0.0002, "exp_finish": 33.010775}, {"code": "TUN", "name": "Tunisia", "group": "F", "elo": 1636.0, "win_group": 0.05415, "through": 0.36705, "r16": 0.0891, "qf": 0.0188, "sf": 0.00345, "final": 0.0007, "champion": 0.00015, "exp_finish": 33.43365}, {"code": "RSA", "name": "South Africa", "group": "A", "elo": 1524.0, "win_group": 0.04975, "through": 0.3333, "r16": 0.0631, "qf": 0.01175, "sf": 0.00245, "final": 0.00035, "champion": 0.0001, "exp_finish": 34.331525}, {"code": "BIH", "name": "Bosnia and Herzegovina", "group": "B", "elo": 1594.0, "win_group": 0.0891, "through": 0.5675, "r16": 0.12355, "qf": 0.02385, "sf": 0.0039, "final": 0.001, "champion": 0.0001, "exp_finish": 29.781}, {"code": "NZL", "name": "New Zealand", "group": "G", "elo": 1585.0, "win_group": 0.0762, "through": 0.40565, "r16": 0.0867, "qf": 0.01685, "sf": 0.0026, "final": 0.0004, "champion": 0.0001, "exp_finish": 32.8596}, {"code": "IRQ", "name": "Iraq", "group": "I", "elo": 1607.0, "win_group": 0.02505, "through": 0.2281, "r16": 0.0492, "qf": 0.01055, "sf": 0.00145, "final": 0.00035, "champion": 0.0001, "exp_finish": 36.191725}, {"code": "CPV", "name": "Cape Verde", "group": "H", "elo": 1549.0, "win_group": 0.012, "through": 0.27075, "r16": 0.0496, "qf": 0.00765, "sf": 0.0014, "final": 0.00025, "champion": 5e-05, "exp_finish": 35.522275}, {"code": "KSA", "name": "Saudi Arabia", "group": "H", "elo": 1568.0, "win_group": 0.0171, "through": 0.3454, "r16": 0.07655, "qf": 0.0146, "sf": 0.0025, "final": 0.00035, "champion": 5e-05, "exp_finish": 33.959325}, {"code": "JOR", "name": "Jordan", "group": "J", "elo": 1690.0, "win_group": 0.05205, "through": 0.41725, "r16": 0.1091, "qf": 0.021, "sf": 0.00545, "final": 0.0014, "champion": 5e-05, "exp_finish": 32.3703}, {"code": "QAT", "name": "Qatar", "group": "B", "elo": 1425.0, "win_group": 0.02305, "through": 0.236, "r16": 0.028, "qf": 0.00345, "sf": 0.00045, "final": 5e-05, "champion": 0.0, "exp_finish": 36.365875}, {"code": "HAI", "name": "Haiti", "group": "C", "elo": 1532.0, "win_group": 0.02245, "through": 0.23755, "r16": 0.03895, "qf": 0.00635, "sf": 0.0008, "final": 0.00015, "champion": 0.0, "exp_finish": 36.191075}, {"code": "CUW", "name": "Curacao", "group": "E", "elo": 1436.0, "win_group": 0.0113, "through": 0.15545, "r16": 0.0196, "qf": 0.0022, "sf": 0.0002, "final": 0.0, "champion": 0.0, "exp_finish": 37.7638}, {"code": "GHA", "name": "Ghana", "group": "L", "elo": 1505.0, "win_group": 0.01665, "through": 0.1944, "r16": 0.03035, "qf": 0.00475, "sf": 0.0008, "final": 5e-05, "champion": 0.0, "exp_finish": 36.994425}], "n_sims": 20000};
+const TEAMS = BUNDLE.teams, SIM = BUNDLE.sim;
+const TEAM = {}; TEAMS.forEach(t=>TEAM[t.code]=t);
+const SIMBY = {}; SIM.forEach(s=>SIMBY[s.code]=s);
+let SV = SIM;  // actieve simulatie-weergave (gebakken Python -> live browser)
+document.getElementById('nsims').textContent = (BUNDLE.n_sims/1000)+'k';
+
+const FLAG={ESP:'🇪🇸',ARG:'🇦🇷',FRA:'🇫🇷',ENG:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',BRA:'🇧🇷',POR:'🇵🇹',NED:'🇳🇱',COL:'🇨🇴',GER:'🇩🇪',ECU:'🇪🇨',SUI:'🇨🇭',JPN:'🇯🇵',CRO:'🇭🇷',NOR:'🇳🇴',URU:'🇺🇾',TUR:'🇹🇷',MEX:'🇲🇽',BEL:'🇧🇪',SEN:'🇸🇳',MAR:'🇲🇦',USA:'🇺🇸',KOR:'🇰🇷',AUT:'🇦🇹',AUS:'🇦🇺',CAN:'🇨🇦',IRN:'🇮🇷',PAR:'🇵🇾',SCO:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',ALG:'🇩🇿',EGY:'🇪🇬',PAN:'🇵🇦',CIV:'🇨🇮',SWE:'🇸🇪',CZE:'🇨🇿',TUN:'🇹🇳',COD:'🇨🇩',UZB:'🇺🇿',QAT:'🇶🇦',IRQ:'🇮🇶',RSA:'🇿🇦',KSA:'🇸🇦',JOR:'🇯🇴',CPV:'🇨🇻',BIH:'🇧🇦',GHA:'🇬🇭',CUW:'🇨🇼',HAI:'🇭🇹',NZL:'🇳🇿'};
+const fl=c=>FLAG[c]||'';
+const pct=x=>(x*100).toFixed(x>=0.1?0:1)+'%';
+
+/* ---------- voorspelmotor (port van predict.py / model.py) ---------- */
+const C={BASE_GOALS:1.35,GOAL_BETA:0.70,HOME_ADV_ELO:70,ELO_SCALE:400,RHO:-0.05,MAXG:10,
+ PRIOR_XG:1.30,PRIOR_BC:1.80,MAX_FORM_W:0.50,FORM_K:2,BC_W:0.25};
+function eloLambdas(eH,eA,adv){const d=(eH-eA+adv)/C.ELO_SCALE;
+ return [C.BASE_GOALS*Math.exp(C.GOAL_BETA*d), C.BASE_GOALS*Math.exp(-C.GOAL_BETA*d)];}
+function attack(f){const bc=f.big_chance_rate*(C.PRIOR_XG/C.PRIOR_BC);
+ return (1-C.BC_W)*f.xg_for_roll + C.BC_W*bc;}
+function defense(f){return f.xga_roll;}
+function formWeight(n){return n<=0?0:C.MAX_FORM_W*n/(n+C.FORM_K);}
+function formLambdas(hf,af){return [Math.sqrt(attack(hf)*defense(af)), Math.sqrt(attack(af)*defense(hf))];}
+function fact(k){let r=1;for(let i=2;i<=k;i++)r*=i;return r;}
+function pois(k,l){return Math.exp(-l)*Math.pow(l,k)/fact(k);}
+function dcTau(x,y,l,m){if(x==0&&y==0)return 1-l*m*C.RHO;if(x==0&&y==1)return 1+l*C.RHO;
+ if(x==1&&y==0)return 1+m*C.RHO;if(x==1&&y==1)return 1-C.RHO;return 1;}
+function scoreMatrix(lH,lA){const n=C.MAXG+1;const hp=[],ap=[];
+ for(let i=0;i<n;i++){hp.push(pois(i,lH));ap.push(pois(i,lA));}
+ const M=[];let s=0;for(let i=0;i<n;i++){M.push([]);for(let j=0;j<n;j++){
+   let v=hp[i]*ap[j];if(i<2&&j<2)v*=dcTau(i,j,lH,lA);M[i][j]=v;s+=v;}}
+ for(let i=0;i<n;i++)for(let j=0;j<n;j++)M[i][j]/=s;return M;}
+function predict(hc,ac,hostOn,manualW){
+ const h=TEAM[hc],a=TEAM[ac];let adv=0;if(hostOn&&h.is_host)adv=C.HOME_ADV_ELO;
+ const el=eloLambdas(h.elo,a.elo,adv), fm=formLambdas(h.feat,a.feat);
+ const wAuto=formWeight(Math.min(h.feat.n_eff??h.feat.n_xg,a.feat.n_eff??a.feat.n_xg));
+ const w=(manualW==null)?wAuto:manualW;
+ const lH=(1-w)*el[0]+w*fm[0], lA=(1-w)*el[1]+w*fm[1];
+ const M=scoreMatrix(lH,lA);const n=M.length;
+ let pH=0,pD=0,pA=0,eH=0,eA=0,scores=[];
+ for(let i=0;i<n;i++)for(let j=0;j<n;j++){const p=M[i][j];
+   if(i>j)pH+=p;else if(i<j)pA+=p;else pD+=p;eH+=i*p;eA+=j*p;scores.push([i,j,p]);}
+ scores.sort((x,y)=>y[2]-x[2]);
+ return {pH,pD,pA,eH,eA,lH,lA,w,wAuto,el,fm,top:scores.slice(0,5)};
+}
+
+/* ---------- voorspeller-UI ---------- */
+function teamOptions(sel){
+ const byG={};TEAMS.forEach(t=>(byG[t.group]=byG[t.group]||[]).push(t));
+ return Object.keys(byG).sort().map(g=>
+  `<optgroup label="Groep ${g}">`+byG[g].sort((a,b)=>b.elo-a.elo).map(t=>
+   `<option value="${t.code}">${fl(t.code)} ${t.name}</option>`).join('')+`</optgroup>`).join('');
+}
+function teamInfo(t){
+ return `<div class="big">${fl(t.code)}</div>
+  <div class="stat"><span>Elo</span><b>${Math.round(t.elo)}</b></div>
+  <div class="stat"><span>FIFA-rang</span><b>${t.fifa_rank}</b></div>
+  <div class="stat"><span>xG voor / tegen</span><b>${t.feat.xg_for_roll.toFixed(2)} / ${t.feat.xga_roll.toFixed(2)}</b></div>
+  <div class="stat"><span>vorm-data</span><b>${t.feat.n_xg}/5 wedstr.</b></div>`;
+}
+function renderPred(){
+ const hc=document.getElementById('selH').value, ac=document.getElementById('selA').value;
+ const hostOn=document.getElementById('hostadv').checked;
+ const auto=document.getElementById('autow').checked;
+ const slider=document.getElementById('wslider');
+ slider.disabled=auto;
+ document.getElementById('infoH').innerHTML=teamInfo(TEAM[hc]);
+ document.getElementById('infoA').innerHTML=teamInfo(TEAM[ac]);
+ if(hc===ac){document.getElementById('result').innerHTML='<p class="hint" style="margin:0">Kies twee verschillende landen.</p>';return;}
+ const manualW = auto ? null : (slider.value/100);
+ const r=predict(hc,ac,hostOn,manualW);
+ if(auto) slider.value=Math.round(r.w*100);
+ const wPct=Math.round(r.w*100);
+ const minN=Math.min(TEAM[hc].feat.n_eff??TEAM[hc].feat.n_xg,TEAM[ac].feat.n_eff??TEAM[ac].feat.n_xg);
+ let note;
+ if(!auto){
+   note=`Balans <b>handmatig</b> ingesteld: vorm telt voor <b>${wPct}%</b>, Elo voor <b>${100-wPct}%</b>. Databewust zou hier <b>${Math.round(r.wAuto*100)}%</b> vorm zijn.`;
+ } else if(r.w===0){
+   note=`Eén van beide landen heeft geen xG-data, dus dit is <b>puur op Elo</b>. Zet 'databewust' uit om zelf te schuiven.`;
+ } else {
+   note=`De vorm telt mee voor <b>${wPct}%</b>, Elo voor <b>${100-wPct}%</b> — bepaald door het land met de minste data (${minN}/5 wedstrijden). Zet 'databewust' uit om zelf te schuiven.`;
+ }
+ document.getElementById('result').innerHTML=`
+  <div class="splitbar">
+    <div class="seg-h" style="flex-basis:${r.pH*100}%">${r.pH>0.08?pct(r.pH):''}</div>
+    <div class="seg-d" style="flex-basis:${r.pD*100}%">${r.pD>0.08?pct(r.pD):''}</div>
+    <div class="seg-a" style="flex-basis:${r.pA*100}%">${r.pA>0.08?pct(r.pA):''}</div>
+  </div>
+  <div class="splitlbl"><span>${fl(hc)} winst ${pct(r.pH)}</span><span>gelijk ${pct(r.pD)}</span><span>${pct(r.pA)} winst ${fl(ac)}</span></div>
+  <div class="eg">
+    <div><div class="num h">${r.eH.toFixed(1)}</div><div class="lbl">${TEAM[hc].name}</div></div>
+    <div class="dash">–</div>
+    <div><div class="num a">${r.eA.toFixed(1)}</div><div class="lbl">${TEAM[ac].name}</div></div>
+  </div>
+  <div class="lbl" style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">verwachte goals</div>
+  <div class="scores">${r.top.map(s=>`<span class="chip"><b>${s[0]}-${s[1]}</b> ${pct(s[2])}</span>`).join('')}</div>
+  <div class="blend">
+    <div class="blend-bar"><div class="elo" style="flex-basis:${100-wPct}%"></div><div class="form" style="flex-basis:${wPct}%"></div></div>
+    <div class="blend-row"><span class="e">Elo ${100-wPct}%</span><span class="f">vorm ${wPct}%</span></div>
+    <p class="blend-note">${note}</p>
+    <div class="srcs">
+      <span>Elo zegt <b>${r.el[0].toFixed(2)}–${r.el[1].toFixed(2)}</b></span>
+      <span>vorm zegt <b>${r.fm[0].toFixed(2)}–${r.fm[1].toFixed(2)}</b></span>
+      <span>gemengd <b>${r.lH.toFixed(2)}–${r.lA.toFixed(2)}</b></span>
+    </div>
+  </div>`;
+}
+
+/* ---------- poules ---------- */
+function poulesData(){
+ const byG={};TEAMS.forEach(t=>(byG[t.group]=byG[t.group]||[]).push(t.code));
+ const out={};
+ Object.keys(byG).sort().forEach(g=>{
+  const cs=byG[g].slice().sort(),s={};
+  cs.forEach(c=>s[c]={c,pld:0,pts:0,gf:0,ga:0,xpts:0,xgd:0});
+  for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){
+   const h=cs[i],a=cs[j],sc=RES[g+'_'+h+'_'+a];
+   if(sc&&sc[0]!=null&&sc[1]!=null){const hg=sc[0],ag=sc[1];
+    s[h].pld++;s[a].pld++;s[h].gf+=hg;s[h].ga+=ag;s[a].gf+=ag;s[a].ga+=hg;
+    if(hg>ag)s[h].pts+=3;else if(hg<ag)s[a].pts+=3;else{s[h].pts++;s[a].pts++;}
+   }else{const e=matchExpect(h,a);
+    s[h].xpts+=e.pHs*3+e.pD;s[a].xpts+=e.pAs*3+e.pD;s[h].xgd+=e.eH-e.eA;s[a].xgd+=e.eA-e.eH;}
+  }
+  cs.forEach(c=>{const o=s[c];o.gd=o.gf-o.ga;o.xend=o.pts+o.xpts;o.xgdend=o.gd+o.xgd;});
+  cs.slice().sort((a,b)=>s[b].xend-s[a].xend||s[b].xgdend-s[a].xgdend||s[b].gf-s[a].gf).forEach((c,i)=>s[c].xpos=i+1);
+  out[g]=cs.slice().sort((a,b)=>s[b].pts-s[a].pts||s[b].gd-s[a].gd||s[b].gf-s[a].gf||s[b].xend-s[a].xend).map(c=>s[c]);
+ });
+ return out;
+}
+function renderPoules(){
+ const data=poulesData();
+ const html=Object.keys(data).map(g=>{
+  const rows=data[g].map((o,i)=>{
+   const cls=o.xpos<=2?'qdir':(o.xpos===3?'qthird':'qout');
+   const gd=o.gd>0?'+'+o.gd:(''+o.gd);
+   return `<tr class="${cls}"><td class="pos">${i+1}</td>`+
+    `<td class="tm"><span class="fl">${fl(o.c)}</span>${TEAM[o.c].name}</td>`+
+    `<td>${o.pld}</td><td class="pt">${o.pts}</td><td>${gd}</td>`+
+    `<td class="xe">${o.xend.toFixed(1)}</td><td class="xp">${o.xpos}</td></tr>`;
+  }).join('');
+  return `<div class="pcard"><h3>Groep ${g}</h3><table class="ptable">`+
+   `<thead><tr><th>#</th><th class="l">team</th><th>G</th><th>Ptn</th><th>+/-</th><th>verw.</th><th>pos</th></tr></thead>`+
+   `<tbody>${rows}</tbody></table></div>`;
+ }).join('');
+ document.getElementById('pgrid').innerHTML=html;
+}
+
+/* ---------- toernooi ---------- */
+function heat(v){const a=Math.min(v,1);return `background:rgba(198,255,61,${(a*0.7).toFixed(3)});color:${a>0.5?'#06120a':'var(--txt)'}`;}
+let gf='alle',sortK='champion',desc=true;
+function renderBars(){
+ const top=[...SV].sort((a,b)=>b.champion-a.champion).slice(0,24);const mx=top[0].champion;
+ document.getElementById('bars').innerHTML=top.map(r=>
+  `<div class="brow"><div class="nm">${fl(r.code)} ${r.name}</div>
+   <div class="track"><div class="fill" style="width:${(r.champion/mx*100).toFixed(1)}%"></div></div>
+   <div class="val">${pct(r.champion)}</div></div>`).join('');
+}
+function renderSimTable(){
+ let rows=gf==='alle'?[...SV]:SV.filter(r=>r.group===gf);
+ rows.sort((a,b)=>{const d=a[sortK]>b[sortK]?1:-1;return desc?-d:d;});
+ document.querySelector('#simtbl tbody').innerHTML=rows.map(r=>`<tr>
+  <td class="l nm">${fl(r.code)} ${r.name}</td><td>${r.group}</td>
+  <td style="color:var(--muted)">${Math.round(r.elo)}</td>
+  <td>${pct(r.win_group)}</td>
+  <td><span class="heat" style="${heat(r.through)}">${pct(r.through)}</span></td>
+  <td>${pct(r.r16)}</td><td>${pct(r.qf)}</td><td>${pct(r.sf)}</td><td>${pct(r.final)}</td>
+  <td><span class="heat" style="${heat(r.champion)}">${pct(r.champion)}</span></td>
+  <td style="color:var(--muted)">${r.exp_finish.toFixed(1)}</td></tr>`).join('');
+}
+function initSimFilter(){
+ const gs=[...new Set(SIM.map(r=>r.group))].sort();
+ document.getElementById('gfilter').innerHTML=['alle',...gs].map(g=>
+  `<span class="fchip${g==='alle'?' on':''}" data-g="${g}">${g==='alle'?'alle groepen':'groep '+g}</span>`).join('');
+ document.querySelectorAll('#gfilter .fchip').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('#gfilter .fchip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');gf=c.dataset.g;renderSimTable();});
+ document.querySelectorAll('#simtbl th').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;if(k===sortK)desc=!desc;else{sortK=k;desc=(k!=='name'&&k!=='exp_finish'&&k!=='group');}renderSimTable();});
+}
+
+/* ---------- teams ---------- */
+let tSortK='elo',tDesc=true;
+function cov(n){let s='<span class="cov">';for(let i=0;i<5;i++)s+=`<i class="${i<n?'on':''}"></i>`;return s+'</span>';}
+function renderTeams(){
+ const rows=[...TEAMS].sort((a,b)=>{
+  const va=tSortK==='name'||tSortK==='group'?a[tSortK]:(a.feat[tSortK]!==undefined?a.feat[tSortK]:a[tSortK]);
+  const vb=tSortK==='name'||tSortK==='group'?b[tSortK]:(b.feat[tSortK]!==undefined?b.feat[tSortK]:b[tSortK]);
+  const d=va>vb?1:-1;return tDesc?-d:d;});
+ document.querySelector('#teamtbl tbody').innerHTML=rows.map(t=>`<tr>
+  <td class="l nm">${fl(t.code)} ${t.name}</td><td>${t.group}</td>
+  <td>${Math.round(t.elo)}</td><td style="color:var(--muted)">${t.fifa_rank}</td>
+  <td>${t.feat.xg_for_roll.toFixed(2)}</td><td>${t.feat.xga_roll.toFixed(2)}</td>
+  <td>${t.feat.big_chance_rate.toFixed(1)}</td><td>${t.feat.goals_for_roll.toFixed(1)}</td>
+  <td class="${t.feat.finishing>=0?'pos':'neg'}">${t.feat.finishing>=0?'+':''}${t.feat.finishing.toFixed(2)}</td>
+  <td class="${t.feat.gk_perf>=0?'pos':'neg'}">${t.feat.gk_perf>=0?'+':''}${t.feat.gk_perf.toFixed(2)}</td>
+  <td>${t.feat.form_points.toFixed(2)}</td><td>${cov(t.feat.n_xg)}</td></tr>`).join('');
+}
+function initTeamSort(){
+ document.querySelectorAll('#teamtbl th').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;if(k===tSortK)tDesc=!tDesc;else{tSortK=k;tDesc=(k!=='name'&&k!=='group');}renderTeams();});
+}
+
+const PLAYERS_DEFAULT=[
+ {n:'Lionel Messi',c:'ARG',gp:1,g:3,a:0,s:5,sog:4,xg:0.92},
+ {n:'Erling Haaland',c:'NOR',gp:1,g:2,a:0,s:5,sog:4,xg:1.14},
+ {n:'Yasin Ayari',c:'SWE',gp:1,g:2,a:0,s:2,sog:2,xg:0.1},
+ {n:'Kai Havertz',c:'GER',gp:1,g:2,a:0,s:3,sog:2,xg:0.96},
+ {n:'Kylian Mbappe',c:'FRA',gp:1,g:2,a:0,s:4,sog:4,xg:0.98},
+ {n:'Harry Kane',c:'ENG',gp:1,g:2,a:0,s:6,sog:4,xg:1.19},
+ {n:'Folarin Balogun',c:'USA',gp:1,g:2,a:0,s:5,sog:3,xg:0.48},
+ {n:'Elijah Just',c:'NZL',gp:1,g:2,a:0,s:2,sog:2,xg:0.36},
+ {n:'Daichi Kamada',c:'JPN',gp:1,g:1,a:0,s:1,sog:1,xg:0.14},
+ {n:'Daniel Munoz',c:'COL',gp:1,g:1,a:0,s:2,sog:2,xg:0.09},
+ {n:'Marcus Rashford',c:'ENG',gp:1,g:1,a:0,s:1,sog:1,xg:0.08},
+ {n:'Amad Diallo',c:'CIV',gp:1,g:1,a:0,s:2,sog:2,xg:0.26},
+ {n:'Crysencio Summerville',c:'NED',gp:1,g:1,a:0,s:1,sog:1,xg:0.09},
+ {n:'Alexander Isak',c:'SWE',gp:1,g:1,a:2,s:3,sog:2,xg:0.25},
+ {n:'John McGinn',c:'SCO',gp:1,g:1,a:0,s:2,sog:1,xg:0.31},
+ {n:'Raul Jimenez',c:'MEX',gp:1,g:1,a:0,s:4,sog:3,xg:0.76},
+ {n:'Virgil Van Dijk',c:'NED',gp:1,g:1,a:0,s:1,sog:1,xg:0.16},
+ {n:'Luis Diaz',c:'COL',gp:1,g:1,a:1,s:2,sog:2,xg:0.29},
+ {n:'Yoane Wissa',c:'COD',gp:1,g:1,a:0,s:2,sog:1,xg:0.2},
+ {n:'Leo Ostigard',c:'NOR',gp:1,g:1,a:0,s:2,sog:1,xg:0.66},
+ {n:'Bradley Barcola',c:'FRA',gp:1,g:1,a:0,s:1,sog:1,xg:0.45},
+ {n:'Breel Embolo',c:'SUI',gp:1,g:1,a:0,s:4,sog:2,xg:1.22},
+ {n:'Joao Neves',c:'POR',gp:1,g:1,a:0,s:1,sog:1,xg:0.12},
+ {n:'Nico Schlotterbeck',c:'GER',gp:1,g:1,a:0,s:3,sog:2,xg:0.34},
+ {n:'Felix Nmecha',c:'GER',gp:1,g:1,a:0,s:4,sog:3,xg:0.42},
+ {n:'Arda Guler',c:'TUR',gp:1,g:0,a:0,s:8,sog:3,xg:0.38},
+ {n:'Son Heung-min',c:'KOR',gp:1,g:0,a:0,s:6,sog:1,xg:0.63},
+ {n:'Dan Ndoye',c:'SUI',gp:1,g:0,a:0,s:6,sog:2,xg:0.64},
+ {n:'Kenan Yildiz',c:'TUR',gp:1,g:0,a:0,s:6,sog:0,xg:0.37},
+ {n:'Malik Tillman',c:'USA',gp:1,g:0,a:1,s:5,sog:2,xg:0.55},
+ {n:'Federico Vinas',c:'URU',gp:1,g:0,a:0,s:5,sog:3,xg:0.7},
+ {n:'Omar Marmoush',c:'EGY',gp:1,g:0,a:0,s:5,sog:1,xg:0.53},
+ {n:'Julian Quinones',c:'MEX',gp:1,g:1,a:0,s:5,sog:2,xg:0.25},
+ {n:'Viktor Gyokeres',c:'SWE',gp:1,g:1,a:1,s:5,sog:2,xg:0.86},
+ {n:'Hakan Calhanoglu',c:'TUR',gp:1,g:0,a:0,s:5,sog:2,xg:0.23},
+ {n:'Chris Wood',c:'NZL',gp:1,g:0,a:2,s:4,sog:2,xg:0.22},
+ {n:'Kevin De Bruyne',c:'BEL',gp:1,g:0,a:0,s:4,sog:1,xg:0.25},
+ {n:'Fabian Ruiz',c:'ESP',gp:1,g:0,a:0,s:4,sog:1,xg:0.23},
+ {n:'Ruben Vargas',c:'SUI',gp:1,g:1,a:0,s:4,sog:2,xg:0.54},
+ {n:'Diego Gomez',c:'PAR',gp:1,g:0,a:0,s:4,sog:1,xg:0.25},
+ {n:'Seko Fofana',c:'CIV',gp:1,g:0,a:0,s:4,sog:1,xg:0.17},
+ {n:'Federico Valverde',c:'URU',gp:1,g:0,a:0,s:4,sog:2,xg:0.17},
+ {n:'Brian Gutierrez',c:'MEX',gp:1,g:0,a:0,s:4,sog:0,xg:0.26},
+ {n:'Jean-Ricner Bellegarde',c:'HAI',gp:1,g:0,a:0,s:3,sog:0,xg:0.12},
+ {n:'Leandro Trossard',c:'BEL',gp:1,g:0,a:0,s:3,sog:0,xg:0.04}
+];
+function loadPlayers(){try{const r=localStorage.getItem('wk2026_players');if(r){const a=JSON.parse(r);if(Array.isArray(a)&&a.length)return a;}}catch(e){}return PLAYERS_DEFAULT.slice();}
+function savePlayers(a){try{localStorage.setItem('wk2026_players',JSON.stringify(a));}catch(e){}}
+let PLAYERS=loadPlayers(),pSortK='mvp',pDesc=true,plLandSel='alle';
+function mvpScore(p){return (p.g||0)*4+(p.a||0)*3+(p.sog||0)*0.7+Math.max(0,(p.s||0)-(p.sog||0))*0.15+(p.xg||0)*0.5;}
+function renderPlayers(){
+ const rows=PLAYERS.filter(p=>plLandSel==='alle'||p.c===plLandSel).map(p=>Object.assign({},p,{mvp:mvpScore(p)})).sort((a,b)=>{
+  const va=a[pSortK],vb=b[pSortK];const d=(typeof va==='string')?(va>vb?1:-1):((va||0)-(vb||0));return pDesc?-d:d;});
+ document.querySelector('#playertbl tbody').innerHTML=rows.map((p,i)=>`<tr>
+  <td class="l nm">${i+1}. ${fl(p.c)} ${p.n}</td><td style="color:var(--muted)">${p.c}</td>
+  <td>${p.gp||0}</td><td style="color:var(--txt);font-weight:600">${p.g||0}</td><td>${p.a||0}</td>
+  <td>${p.s||0}</td><td>${p.sog||0}</td><td style="color:var(--muted)">${(p.xg||0).toFixed(2)}</td>
+  <td style="color:var(--lime);font-weight:700">${p.mvp.toFixed(1)}</td></tr>`).join('');
+}
+function fillLand(){const land=document.getElementById('plLand');if(!land)return;const cs=[...new Set(PLAYERS.map(p=>p.c))].sort();land.innerHTML='<option value="alle">alle landen ('+PLAYERS.length+')</option>'+cs.map(c=>'<option value="'+c+'">'+c+'</option>').join('');if(![...land.options].some(o=>o.value===plLandSel))plLandSel='alle';land.value=plLandSel;}
+function parsePlayersText(txt){
+ txt=(txt||'').trim();if(!txt)return [];
+ try{const a=JSON.parse(txt);if(Array.isArray(a)&&a.length)return a.map(o=>({n:o.n||o.name||'',c:(o.c||o.country||'').toUpperCase(),gp:+o.gp||1,g:+o.g||0,a:+o.a||0,s:+o.s||0,sog:+o.sog||0,xg:+o.xg||0})).filter(o=>o.n);}catch(e){}
+ const num=x=>parseFloat(String(x).replace(',','.'));
+ const out=[];
+ txt.split(/\r?\n/).forEach(line=>{
+  line=line.trim();if(!line)return;
+  line=line.replace(/^\s*#?\s*\d+[\.\)]?\s+/,''); // leidend rang/#-nummer weg
+  const delim=line.indexOf('\t')>=0?'\t':(line.indexOf(';')>=0?';':',');
+  const parts=line.split(delim).map(s=>s.trim()).filter(s=>s!=='');
+  if(parts.length<3)return;
+  if(isNaN(num(parts[2])))return; // kopregel of tekst -> overslaan
+  const n=parts[0],c=(parts[1]||'').toUpperCase(),nums=parts.slice(2).map(num);
+  if(!n)return;
+  out.push({n,c,gp:1,g:nums[0]||0,a:nums[1]||0,s:nums[2]||0,sog:nums[3]||0,xg:nums[4]||0});
+ });
+ return out;
+}
+async function tryLivePlayers(){
+ try{
+  const r=await fetch('spelers.json?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)return;
+  const a=await r.json();
+  if(Array.isArray(a)&&a.length){
+   PLAYERS=a.map(o=>({n:o.n||o.name||'',c:(o.c||o.country||'').toUpperCase(),gp:+o.gp||1,g:+o.g||0,a:+o.a||0,s:+o.s||0,sog:+o.sog||0,xg:+o.xg||0})).filter(o=>o.n);
+   savePlayers(PLAYERS);fillLand();renderPlayers();
+   const n=document.getElementById('plNote');if(n)n.textContent='✓ live data automatisch geladen ('+PLAYERS.length+' spelers)';
+  }
+ }catch(e){/* lokaal bestand of geen spelers.json: stil terugvallen op ingebakken set */}
+}
+function initPlayers(){
+ fillLand();document.getElementById('plLand').onchange=function(){plLandSel=this.value;renderPlayers();};
+ document.querySelectorAll('#playertbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(k===pSortK)pDesc=!pDesc;else{pSortK=k;pDesc=(k!=='n'&&k!=='c');}renderPlayers();});
+ const pst=document.getElementById('plPaste'),note=document.getElementById('plNote');
+ document.getElementById('plImportBtn').onclick=()=>{
+  if(pst.style.display==='none'){pst.style.display='block';note.textContent='plak je lijst (JSON of regels Naam, LAND, goals, assists, schoten, op doel, xG) en klik nogmaals';return;}
+  const a=parsePlayersText(pst.value);
+  if(a.length){PLAYERS=a;savePlayers(a);fillLand();renderPlayers();pst.style.display='none';pst.value='';note.textContent='✓ spelersdata bijgewerkt ('+a.length+' spelers)';}
+  else{note.textContent='✗ niets herkend — plak JSON of regels: Naam, LAND, goals, assists, schoten, op doel, xG';}
+ };
+ document.getElementById('plResetBtn').onclick=()=>{PLAYERS=PLAYERS_DEFAULT.slice();savePlayers(PLAYERS);fillLand();renderPlayers();note.textContent='startset hersteld';};
+ renderPlayers();
+}
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+ document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+ t.classList.add('on');document.getElementById(t.dataset.t).classList.add('on');
+ if(t.dataset.t==='toernooi'&&SV_STALE)scheduleSim();
+});
+
+/* ---------- init ---------- */
+document.getElementById('selH').innerHTML=teamOptions();
+document.getElementById('selA').innerHTML=teamOptions();
+document.getElementById('selH').value='NED';
+document.getElementById('selA').value='FRA';
+['selH','selA','hostadv','autow'].forEach(id=>document.getElementById(id).addEventListener('change',renderPred));
+document.getElementById('wslider').addEventListener('input',renderPred);
+/* ---------- poule-tracker ---------- */
+function trackFixtures(){
+ const byG={};TEAMS.forEach(t=>(byG[t.group]=byG[t.group]||[]).push(t.code));
+ const fx=[];
+ Object.keys(byG).sort().forEach(g=>{const cs=byG[g].sort();
+  for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++)
+   fx.push({g,h:cs[i],a:cs[j],id:g+'_'+cs[i]+'_'+cs[j]});});
+ return fx;
+}
+const FIXT=trackFixtures(), PICK={};
+FIXT.forEach(f=>{
+ let pH,pD,pA;
+ if(TEAM[f.h].is_host){const r=predict(f.h,f.a,true,null);pH=r.pH;pD=r.pD;pA=r.pA;}
+ else if(TEAM[f.a].is_host){const r=predict(f.a,f.h,true,null);pH=r.pA;pD=r.pD;pA=r.pH;}
+ else {const r=predict(f.h,f.a,false,null);pH=r.pH;pD=r.pD;pA=r.pA;}
+ const probs=[pH,pD,pA];const k=probs.indexOf(Math.max(...probs));
+ PICK[f.id]={pick:k,probs,winner:k===0?f.h:(k===2?f.a:null)};});
+function loadRes(){try{return JSON.parse(localStorage.getItem('wk2026_res')||'{}');}catch(e){return {};}}
+function saveRes(r){try{localStorage.setItem('wk2026_res',JSON.stringify(r));}catch(e){}}
+function loadUP(){try{return JSON.parse(localStorage.getItem('wk2026_userpick')||'{}');}catch(e){return {};}}
+function saveUP(u){try{localStorage.setItem('wk2026_userpick',JSON.stringify(u));}catch(e){}}
+let RES=loadRes(), UP=loadUP(), tgf='alle';
+function userSet(id,pick){UP[id]=pick;saveUP(UP);renderTracker();trackSummary();}
+window.userSet=userSet;
+function outcome(sc){if(!sc||sc[0]==null||sc[1]==null)return null;return sc[0]>sc[1]?0:(sc[0]===sc[1]?1:2);}
+function statusCell(id){
+ const sc=RES[id], o=outcome(sc);
+ if(o==null)return '<span style="color:var(--grey)">—</span>';
+ const hit=o===PICK[id].pick;
+ return `<span class="${hit?'ok':'no'}">${hit?'✓':'✗'}</span>`;
+}
+function trackSet(id,which,val){
+ const v=parseInt(val,10);
+ RES[id]=RES[id]||[null,null];
+ RES[id][which]=isNaN(v)?null:v;
+ if(RES[id][0]==null&&RES[id][1]==null)delete RES[id];
+ saveRes(RES);
+ const cell=document.getElementById('st_'+id);if(cell)cell.innerHTML=statusCell(id);
+ trackSummary();renderPoules();
+}
+window.trackSet=trackSet;
+function trackSummary(){
+ let mn=0,mg=0,mb=0, un=0,ug=0,ub=0;
+ FIXT.forEach(f=>{const o=outcome(RES[f.id]);if(o==null)return;
+  mn++; const p=PICK[f.id]; if(p.pick===o)mg++;
+  mb+=(p.probs[0]-(o===0))**2+(p.probs[1]-(o===1))**2+(p.probs[2]-(o===2))**2;
+  const up=UP[f.id];
+  if(up!=null){un++; if(up===o)ug++; ub+=(up===o?0:2);}});
+ const fa=(g,n)=>n?Math.round(g/n*100)+'%':'–', fb=(b,n)=>n?(b/n).toFixed(3):'–';
+ document.getElementById('vscard').innerHTML=`
+  <div class="vs-side you"><div class="lbl">Jouw score</div>
+   <div class="acc">${fa(ug,un)}</div>
+   <div class="sub">${ug}/${un} goed · Brier ${fb(ub,un)}</div></div>
+  <div class="vs-mid">vs</div>
+  <div class="vs-side model"><div class="lbl">Model score</div>
+   <div class="acc">${fa(mg,mn)}</div>
+   <div class="sub">${mg}/${mn} goed · Brier ${fb(mb,mn)}</div></div>`;
+}
+function upickCell(f){
+ const cur=UP[f.id];
+ const opt=[[0,fl(f.h)+' '+f.h],[1,'X'],[2,fl(f.a)+' '+f.a]];
+ return '<span class="upick">'+opt.map(o=>
+  `<button class="${cur===o[0]?'on':''}" onclick="userSet('${f.id}',${o[0]})">${o[1]}</button>`).join('')+'</span>';
+}
+function renderTracker(){
+ let rows=tgf==='alle'?FIXT:FIXT.filter(f=>f.g===tgf);
+ document.querySelector('#tracktbl tbody').innerHTML=rows.map(f=>{
+  const sc=RES[f.id]||[null,null], pk=PICK[f.id];
+  return `<tr>
+   <td class="l nm">${fl(f.h)} ${TEAM[f.h].name} <span style="color:var(--muted)">–</span> ${TEAM[f.a].name} ${fl(f.a)}</td>
+   <td>${pk.winner?`<span class="tip" style="color:var(--lime)">${fl(pk.winner)} ${pk.winner}</span>`:`<span class="tip tX">gelijk</span>`}</td>
+   <td style="color:var(--muted)">${pct(Math.max(...pk.probs))}</td>
+   <td>${upickCell(f)}</td>
+   <td style="white-space:nowrap">
+     <input class="score-in" type="number" min="0" value="${sc[0]==null?'':sc[0]}" oninput="trackSet('${f.id}',0,this.value)">
+     <span style="color:var(--muted)"> - </span>
+     <input class="score-in" type="number" min="0" value="${sc[1]==null?'':sc[1]}" oninput="trackSet('${f.id}',1,this.value)"></td>
+   <td id="st_${f.id}">${statusCell(f.id)}</td></tr>`;
+ }).join('');
+}
+function initTracker(){
+ const gs=[...new Set(FIXT.map(f=>f.g))].sort();
+ document.getElementById('tgfilter').innerHTML=['alle',...gs].map(g=>
+  `<span class="fchip${g==='alle'?' on':''}" data-g="${g}">${g==='alle'?'alle groepen':'groep '+g}</span>`).join('');
+ document.querySelectorAll('#tgfilter .fchip').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('#tgfilter .fchip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');tgf=c.dataset.g;renderTracker();});
+ document.getElementById('trackreset').onclick=()=>{
+  if(confirm('Alle ingevoerde tips en uitslagen wissen?')){RES={};UP={};saveRes(RES);saveUP(UP);renderTracker();trackSummary();}};
+ renderTracker();trackSummary();
+}
+
+/* ---------- knock-out bracket (echt WK 2026-schema, M73–M104) ---------- */
+// Round of 32: vaste paringen op groepspositie (FIFA Final Draw, 5 dec 2025)
+const R32=[
+ {id:'M73',a:{p:'2A'},b:{p:'2B'}},
+ {id:'M74',a:{p:'1E'},b:{third:'M74'}},
+ {id:'M75',a:{p:'1F'},b:{p:'2C'}},
+ {id:'M76',a:{p:'1C'},b:{p:'2F'}},
+ {id:'M77',a:{p:'1I'},b:{third:'M77'}},
+ {id:'M78',a:{p:'2E'},b:{p:'2I'}},
+ {id:'M79',a:{p:'1A'},b:{third:'M79'}},
+ {id:'M80',a:{p:'1L'},b:{third:'M80'}},
+ {id:'M81',a:{p:'1D'},b:{third:'M81'}},
+ {id:'M82',a:{p:'1G'},b:{third:'M82'}},
+ {id:'M83',a:{p:'2K'},b:{p:'2L'}},
+ {id:'M84',a:{p:'1H'},b:{p:'2J'}},
+ {id:'M85',a:{p:'1B'},b:{third:'M85'}},
+ {id:'M86',a:{p:'1J'},b:{p:'2H'}},
+ {id:'M87',a:{p:'1K'},b:{third:'M87'}},
+ {id:'M88',a:{p:'2D'},b:{p:'2G'}},
+];
+const THIRD_ALLOWED={M74:'ABCDF',M77:'CDFGH',M79:'CEFHI',M80:'EHIJK',M81:'BEFIJ',M82:'AEHIJ',M85:'EFGIJ',M87:'DEIJL'};
+const R16=[{id:'M89',a:'M74',b:'M77'},{id:'M90',a:'M73',b:'M75'},{id:'M91',a:'M76',b:'M78'},{id:'M92',a:'M79',b:'M80'},
+ {id:'M93',a:'M83',b:'M84'},{id:'M94',a:'M81',b:'M82'},{id:'M95',a:'M86',b:'M88'},{id:'M96',a:'M85',b:'M87'}];
+const QF=[{id:'M97',a:'M89',b:'M90'},{id:'M98',a:'M93',b:'M94'},{id:'M99',a:'M91',b:'M92'},{id:'M100',a:'M95',b:'M96'}];
+const SF=[{id:'M101',a:'M97',b:'M98'},{id:'M102',a:'M99',b:'M100'}];
+const FIN=[{id:'M104',a:'M101',b:'M102'}];
+const ORD_R32=['M74','M77','M73','M75','M83','M84','M81','M82','M76','M78','M79','M80','M86','M88','M85','M87'];
+const ORD_R16=['M89','M90','M93','M94','M91','M92','M95','M96'];
+const ORD_QF=['M97','M98','M99','M100'], ORD_SF=['M101','M102'];
+
+function knockProb(a,b){ // P(a gaat door), neutraal terrein; gelijk -> strafschoppen op Elo
+ const r=predict(a,b,false,null);
+ const penA=1/(1+Math.pow(10,-(TEAM[a].elo-TEAM[b].elo)/(2*C.ELO_SCALE)));
+ return r.pH + r.pD*penA;
+}
+function favorite(a,b){return knockProb(a,b)>=0.5?a:b;}
+function matchExpect(h,a){ // verwachte uitkomst groepswedstrijd (gastland thuis), vanuit h
+ if(TEAM[h].is_host){const r=predict(h,a,true,null);return {pHs:r.pH,pD:r.pD,pAs:r.pA,eH:r.eH,eA:r.eA};}
+ if(TEAM[a].is_host){const r=predict(a,h,true,null);return {pHs:r.pA,pD:r.pD,pAs:r.pH,eH:r.eA,eA:r.eH};}
+ const r=predict(h,a,false,null);return {pHs:r.pH,pD:r.pD,pAs:r.pA,eH:r.eH,eA:r.eA};
+}
+function groupStandings(){ // deterministische eindstand per groep: xPts -> xGD -> xGF
+ const byG={};TEAMS.forEach(t=>(byG[t.group]=byG[t.group]||[]).push(t.code));
+ const st={};
+ Object.keys(byG).forEach(g=>{const cs=byG[g].slice().sort();const s={};cs.forEach(c=>s[c]={c,xpts:0,xgd:0,xgf:0});
+  for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){const e=matchExpect(cs[i],cs[j]);
+   s[cs[i]].xpts+=e.pHs*3+e.pD;s[cs[j]].xpts+=e.pAs*3+e.pD;s[cs[i]].xgf+=e.eH;s[cs[j]].xgf+=e.eA;s[cs[i]].xgd+=e.eH-e.eA;s[cs[j]].xgd+=e.eA-e.eH;}
+  st[g]=cs.slice().sort((a,b)=>s[b].xpts-s[a].xpts||s[b].xgd-s[a].xgd||s[b].xgf-s[a].xgf).map(c=>s[c]);});
+ return st;
+}
+function matchThirds(groups){ // wijs de 8 nummers-3-groepen toe aan hun toegestane slots
+ const slots=Object.keys(THIRD_ALLOWED).sort((a,b)=>THIRD_ALLOWED[a].length-THIRD_ALLOWED[b].length||a.localeCompare(b));
+ const used={},res={};
+ (function bt(i){if(i===slots.length)return true;const s=slots[i];
+  for(const g of groups){if(!used[g]&&THIRD_ALLOWED[s].includes(g)){used[g]=1;res[s]=g;if(bt(i+1))return true;delete used[g];delete res[s];}}
+  return false;})(0);
+ const unfilled=slots.filter(s=>!res[s]),left=groups.filter(g=>!Object.values(res).includes(g));
+ unfilled.forEach((s,i)=>{if(left[i])res[s]=left[i];});  // veiligheidsnet
+ return res;
+}
+let brForced={}, M_PART={};
+function resolveKO(){
+ const st=groupStandings();
+ const pos=p=>p[0]==='1'?st[p[1]][0].c:st[p[1]][1].c;
+ const pool=Object.keys(st).map(g=>Object.assign({g},st[g][2])).sort((a,b)=>b.xpts-a.xpts||b.xgd-a.xgd||b.xgf-a.xgf);
+ const q=pool.slice(0,8), teamByG={};q.forEach(x=>teamByG[x.g]=x.c);
+ const slotG=matchThirds(q.map(x=>x.g));
+ const part=x=>x.p?pos(x.p):teamByG[slotG[x.third]];
+ const W={};M_PART={};
+ const win=(id,a,b)=>{if(!a||!b)return a||b;let f=brForced[id];if(f&&f!==a&&f!==b){delete brForced[id];f=null;}return f||favorite(a,b);};
+ R32.forEach(m=>{const a=part(m.a),b=part(m.b);M_PART[m.id]=[a,b];W[m.id]=win(m.id,a,b);});
+ [].concat(R16,QF,SF,FIN).forEach(m=>{const a=W[m.a],b=W[m.b];M_PART[m.id]=[a,b];W[m.id]=win(m.id,a,b);});
+ return W;
+}
+const RLBL={r32:'Laatste 32',r16:'Achtste finale',qf:'Kwartfinale',sf:'Halve finale',fin:'Finale'};
+function renderBracket(){
+ const W=resolveKO(), champ=W['M104'];
+ document.getElementById('brChamp').innerHTML=champ?`${fl(champ)} ${TEAM[champ].name}`:'—';
+ const note=document.getElementById('brModeNote');
+ if(note)note.textContent='echt WK-schema (M73–M104) — klik een land aan voor een upset · 🎲 = dicht duel (<60%), kan via verlenging of strafschoppen alle kanten op';
+ const col=(label,ids)=>{
+  const nodes=ids.map(id=>{const pr=M_PART[id]||[],w=W[id];
+   const cell=t=>{if(!t)return '<button class="bteam empty">?</button>';
+    const cls=(w===t?'win':'')+(brForced[id]===t&&w===t?' forced':'');
+    return `<button class="bteam ${cls}" data-mid="${id}" data-team="${t}">${fl(t)} <span class="bc">${t}</span></button>`;};
+   let prob='';
+   if(pr[0]&&pr[1]&&w){const opp=w===pr[0]?pr[1]:pr[0];const pw=Math.round(knockProb(w,opp)*100);const tight=pw<60;prob=`<div class="bprob${tight?' tight':''}">${tight?'🎲 ':''}${w} door ${pw}%</div>`;}
+   return `<div class="bmatch"><div class="mc">${id}</div>${cell(pr[0])}${cell(pr[1])}${prob}</div>`;}).join('');
+  return `<div class="bround"><div class="rlbl">${label}</div>${nodes}</div>`;};
+ let html=col(RLBL.r32,ORD_R32)+col(RLBL.r16,ORD_R16)+col(RLBL.qf,ORD_QF)+col(RLBL.sf,ORD_SF)+col(RLBL.fin,['M104']);
+ html+=`<div class="bround"><div class="rlbl">Kampioen</div><div class="bmatch"><div class="mc">&nbsp;</div><button class="bteam win">${champ?fl(champ)+' <span class="bc">'+champ+'</span>':'?'}</button></div></div>`;
+ document.getElementById('bracket').innerHTML=html;
+}
+function initBracket(){
+ document.getElementById('bracket').addEventListener('click',e=>{
+  const btn=e.target.closest('.bteam');if(!btn)return;
+  const mid=btn.dataset.mid,team=btn.dataset.team;if(!mid||!team)return;
+  brForced[mid]=team;renderBracket();});
+ const sim=document.getElementById('simBtn');
+ sim.textContent='🎯 Herstel voorspelmodel';
+ sim.onclick=()=>{brForced={};renderBracket();};
+ const rb=document.getElementById('brReset');if(rb)rb.style.display='none';
+ renderBracket();
+}
+
+/* ---------- live kampioenssimulatie (browser Monte Carlo) ---------- */
+const SIM_N=8000;
+let SV_STALE=false;
+function lambdasOf(a,b){ // host-adjusted groepslambda's vanuit a
+ if(TEAM[a].is_host){const r=predict(a,b,true,null);return [r.lH,r.lA];}
+ if(TEAM[b].is_host){const r=predict(b,a,true,null);return [r.lA,r.lH];}
+ const r=predict(a,b,false,null);return [r.lH,r.lA];
+}
+function poiss(l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=Math.random();}while(p>L);return k-1;}
+function runChampSim(n){
+ n=n||SIM_N;
+ const groups={};TEAMS.forEach(t=>(groups[t.group]=groups[t.group]||[]).push(t.code));
+ const gk=Object.keys(groups).sort();gk.forEach(g=>groups[g].sort());
+ const glam={};gk.forEach(g=>{const cs=groups[g];for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++)glam[cs[i]+'|'+cs[j]]=lambdasOf(cs[i],cs[j]);});
+ const koc=new Map();const koP=(a,b)=>{const k=a+'|'+b;let v=koc.get(k);if(v===undefined){v=knockProb(a,b);koc.set(k,v);}return v;};
+ const S={};TEAMS.forEach(t=>S[t.code]={win_group:0,through:0,r16:0,qf:0,sf:0,final:0,champion:0});
+ const drw=(a,b)=>!a||!b?(a||b):(Math.random()<koP(a,b)?a:b);
+ for(let run=0;run<n;run++){
+  const st={};
+  gk.forEach(g=>{const cs=groups[g];cs.forEach(c=>st[c]={pts:0,gd:0,gf:0,r:Math.random()});
+   for(let i=0;i<cs.length;i++)for(let j=i+1;j<cs.length;j++){const lm=glam[cs[i]+'|'+cs[j]];const gi=poiss(lm[0]),gj=poiss(lm[1]);
+    st[cs[i]].gf+=gi;st[cs[j]].gf+=gj;st[cs[i]].gd+=gi-gj;st[cs[j]].gd+=gj-gi;
+    if(gi>gj)st[cs[i]].pts+=3;else if(gj>gi)st[cs[j]].pts+=3;else{st[cs[i]].pts++;st[cs[j]].pts++;}}});
+  const rank={},thirds=[];
+  gk.forEach(g=>{const cs=groups[g].slice().sort((a,b)=>st[b].pts-st[a].pts||st[b].gd-st[a].gd||st[b].gf-st[a].gf||st[b].r-st[a].r);
+   rank[g]=cs;S[cs[0]].win_group++;S[cs[0]].through++;S[cs[1]].through++;
+   thirds.push({g,c:cs[2],pts:st[cs[2]].pts,gd:st[cs[2]].gd,gf:st[cs[2]].gf,r:st[cs[2]].r});});
+  thirds.sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||b.r-a.r);
+  const q3=thirds.slice(0,8),tbg={};q3.forEach(x=>{tbg[x.g]=x.c;S[x.c].through++;});
+  const slotG=matchThirds(q3.map(x=>x.g));
+  const pos=p=>p[0]==='1'?rank[p[1]][0]:rank[p[1]][1];
+  const part=x=>x.p?pos(x.p):tbg[slotG[x.third]];
+  const W={};
+  R32.forEach(m=>{const w=drw(part(m.a),part(m.b));W[m.id]=w;if(w)S[w].r16++;});
+  R16.forEach(m=>{const w=drw(W[m.a],W[m.b]);W[m.id]=w;if(w)S[w].qf++;});
+  QF.forEach(m=>{const w=drw(W[m.a],W[m.b]);W[m.id]=w;if(w)S[w].sf++;});
+  SF.forEach(m=>{const w=drw(W[m.a],W[m.b]);W[m.id]=w;if(w)S[w].final++;});
+  FIN.forEach(m=>{const w=drw(W[m.a],W[m.b]);W[m.id]=w;if(w)S[w].champion++;});
+ }
+ SV=TEAMS.map(t=>{const s=S[t.code],d=k=>s[k]/n;
+  return {code:t.code,name:t.name,group:t.group,elo:t.elo,win_group:d('win_group'),through:d('through'),
+   r16:d('r16'),qf:d('qf'),sf:d('sf'),final:d('final'),champion:d('champion'),
+   exp_finish:d('through')+d('r16')+d('qf')+d('sf')+d('final')+d('champion')};});
+ SV.sort((a,b)=>b.champion-a.champion);
+ SV_STALE=false;
+ renderBars();renderSimTable();renderPoules();
+ const s2=document.getElementById('simStatus');if(s2)s2.textContent=`${n.toLocaleString('nl-NL')} simulaties · live (met je ingevoerde stats)`;
+}
+function scheduleSim(){const s=document.getElementById('simStatus');if(s)s.textContent='simuleren…';setTimeout(()=>runChampSim(),30);}
+function markSimStale(){SV_STALE=true;const s=document.getElementById('simStatus');if(s)s.textContent='⚠ verouderd — klik ↻ of heropen dit tabblad';}
+
+
+const FW=5,SW=6,SK=5,RHO=0.85,P_XG=1.30,P_BC=1.8,XGCLAMP=6.0,REFELO=1800,SOSA=0.6,SLO=0.65,SHI=1.5;
+const shrinkF=(v,n,p,k)=>(n===0||v==null)?p:(n*v+k*p)/(n+k);
+const meanF=xs=>xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null;
+const clampXG=x=>x==null?null:Math.min(x,XGCLAMP);
+const numF=v=>{const x=parseFloat(v);return isNaN(x)?null:x;};
+const sosAtt=oe=>!oe?1:Math.min(Math.max(Math.pow(oe/REFELO,SOSA),SLO),SHI);
+const sosDef=oe=>!oe?1:Math.min(Math.max(Math.pow(REFELO/oe,SOSA),SLO),SHI);
+const WC_W=2;  // WK-wedstrijden wegen WC_W x zwaarder dan oefenduels
+function computeFeat(ms){ // port van de Python feature-pijplijn, met wedstrijdtype-weging
+ const lastS=ms.slice(-SW),lastF=ms.slice(-FW);
+ const wmean=(arr,key)=>{let sw=0,sv=0;for(const m of arr){const v=m[key];if(v==null)continue;const w=m.wt||1;sv+=w*v;sw+=w;}return [sw?sv/sw:null,sw];};
+ const [mxg,nxg]=wmean(lastS,'xg_adj'),[mxga,nxga]=wmean(lastS,'xga_adj'),[mbc,nbc]=wmean(lastS,'big_chances');
+ const recent=lastF.filter(m=>m.gf!=null&&m.ga!=null);let fp=0.5;
+ if(recent.length){let nu=0,de=0;for(let i=0;i<recent.length;i++){const h=recent[recent.length-1-i],w=Math.pow(RHO,i)*(h.wt||1),pts=h.gf>h.ga?3:(h.gf===h.ga?1:0);nu+=w*pts;de+=w;}fp=(nu/de)/3;}
+ const gfA=ms.map(m=>m.gf).filter(v=>v!=null),gaA=ms.map(m=>m.ga).filter(v=>v!=null),shA=ms.map(m=>m.shots).filter(v=>v!=null);
+ const fin=ms.filter(m=>m.gf!=null&&m.xg!=null).map(m=>m.gf-clampXG(m.xg));
+ const gk=ms.filter(m=>m.ga!=null&&m.xga!=null).map(m=>clampXG(m.xga)-m.ga);
+ const neff=ms.filter(m=>m.xg!=null).reduce((s,m)=>s+(m.wt||1),0);
+ return {xg_for_roll:shrinkF(mxg,nxg,P_XG,SK),xga_roll:shrinkF(mxga,nxga,P_XG,SK),
+  big_chance_rate:shrinkF(mbc,nbc,P_BC,SK),form_points:fp,
+  goals_for_roll:gfA.length?meanF(gfA):1.3,goals_against_roll:gaA.length?meanF(gaA):1.3,
+  shots_for_roll:shA.length?meanF(shA):11,finishing:fin.length?meanF(fin):0,gk_perf:gk.length?meanF(gk):0,
+  n_xg:ms.filter(m=>m.xg!=null).length,n_eff:neff};
+}
+function loadMS(){try{return JSON.parse(localStorage.getItem('wk2026_matchstats')||'{}');}catch(e){return {};}}
+function saveMS(m){try{localStorage.setItem('wk2026_matchstats',JSON.stringify(m));}catch(e){}}
+let MS=loadMS();
+const msHasAny=d=>!!d&&['a','b'].some(s=>d[s]&&['g','xg','bc','sh'].some(k=>d[s][k]!=null));
+function wcRecords(code){ // WK-wedstrijdrecords voor een land uit de ingevoerde stats
+ const recs=[];
+ FIXT.forEach(f=>{const d=MS[f.id];if(!msHasAny(d))return;const A=d.a||{},B=d.b||{};
+  if(f.h===code)recs.push({gf:A.g,ga:B.g,xg:A.xg,xga:B.xg,big_chances:A.bc,shots:A.sh,
+    xg_adj:A.xg==null?null:clampXG(A.xg)*sosAtt(TEAM[f.a].elo),xga_adj:B.xg==null?null:clampXG(B.xg)*sosDef(TEAM[f.a].elo),wt:WC_W});
+  else if(f.a===code)recs.push({gf:B.g,ga:A.g,xg:B.xg,xga:A.xg,big_chances:B.bc,shots:B.sh,
+    xg_adj:B.xg==null?null:clampXG(B.xg)*sosAtt(TEAM[f.h].elo),xga_adj:A.xg==null?null:clampXG(A.xg)*sosDef(TEAM[f.h].elo),wt:WC_W});
+ });
+ return recs;
+}
+function applyTeam(code){TEAM[code].feat=computeFeat(TEAM[code].matches.concat(wcRecords(code)));}
+function applyLiveAll(){TEAMS.forEach(t=>applyTeam(t.code));}
+function refreshModel(){renderPred();renderBracket();renderTeams();renderPoules();}
+
+function loadODDS(){try{return JSON.parse(localStorage.getItem('wk2026_odds')||'{}');}catch(e){return {};}}
+function saveODDS(o){try{localStorage.setItem('wk2026_odds',JSON.stringify(o));}catch(e){}}
+let ODDS=loadODDS();
+function fixtureModelProbs(f){ // host-adjusted model-kansen [1,X,2] in wedstrijdrichting
+ if(TEAM[f.h].is_host){const r=predict(f.h,f.a,true,null);return [r.pH,r.pD,r.pA];}
+ if(TEAM[f.a].is_host){const r=predict(f.a,f.h,true,null);return [r.pA,r.pD,r.pH];}
+ const r=predict(f.h,f.a,false,null);return [r.pH,r.pD,r.pA];
+}
+function deVig(o){ // decimale odds -> impliciete kansen met de marge eruit
+ if(!o||o.some(x=>x==null||x<=1))return null;
+ const inv=o.map(x=>1/x),s=inv[0]+inv[1]+inv[2];return inv.map(x=>x/s);
+}
+const p3=p=>`${Math.round(p[0]*100)}/${Math.round(p[1]*100)}/${Math.round(p[2]*100)}`;
+function oddsReadout(f){
+ const m=fixtureModelProbs(f), k=deVig(ODDS[f.id]);
+ let s=`<b>Model</b> ${p3(m)}`;
+ if(k){const bl=m.map((x,i)=>0.5*x+0.5*k[i]);
+  s+=` &nbsp;·&nbsp; <span style="color:var(--amber)">Markt</span> ${p3(k)} &nbsp;·&nbsp; <span style="color:var(--lime)">Samen</span> ${p3(bl)}`;}
+ else s+=` &nbsp;·&nbsp; <span style="color:var(--grey)">vul odds in voor de marktvergelijking</span>`;
+ return s;
+}
+function oddsRow(f){
+ const o=ODDS[f.id]||[null,null,null];
+ const mk=(i,ph)=>`<input class="ms-in od-in ${o[i]!=null?'filled':''}" type="number" step="0.01" min="1" placeholder="${ph}" value="${o[i]==null?'':o[i]}" oninput="oddsSet('${f.id}',${i},this.value)">`;
+ return `<div class="msodds"><span class="ol">odds 1 / X / 2</span>${mk(0,'1')}${mk(1,'X')}${mk(2,'2')}</div><div class="oddsread" id="od_${f.id}">${oddsReadout(f)}</div>`;
+}
+function updateReadout(f){const el=document.getElementById('od_'+f.id);if(el)el.innerHTML=oddsReadout(f);}
+function oddsSet(id,idx,val){
+ ODDS[id]=ODDS[id]||[null,null,null];
+ const v=numF(val);ODDS[id][idx]=(v==null||v<=1)?null:v;
+ if(ODDS[id].every(x=>x==null))delete ODDS[id];
+ saveODDS(ODDS);
+ updateReadout(FIXT.find(x=>x.id===id));
+}
+window.oddsSet=oddsSet;
+
+let msgf='A';
+function msRow(f,side,team,cls){
+ const d=(MS[f.id]&&MS[f.id][side])||{};
+ const mk=(k,ph)=>`<input class="ms-in ${d[k]!=null?'filled':''}" type="number" step="${k==='xg'?'0.01':'1'}" min="0" placeholder="${ph}" value="${d[k]==null?'':d[k]}" oninput="msSet('${f.id}','${side}','${k}',this.value)">`;
+ return `<div class="msteam"><span class="tn ${cls}">${fl(team)} ${team}</span>${mk('g','goals')}${mk('xg','xG')}${mk('bc','gr.k')}${mk('sh','sch')}</div>`;
+}
+function renderMatchstats(){
+ const fx=FIXT.filter(f=>f.g===msgf);
+ document.getElementById('msgrid').innerHTML=fx.map(f=>`<div class="mscard">
+   <div class="mtitle"><span>${fl(f.h)} ${TEAM[f.h].name} <span style="color:var(--muted)">vs</span> ${TEAM[f.a].name} ${fl(f.a)}</span><span class="dn">${msHasAny(MS[f.id])?'✓ ingevuld':''}</span></div>
+   <div class="mshead"><span></span><span>goals</span><span>xG</span><span>gr.kansen</span><span>schoten</span></div>
+   ${msRow(f,'a',f.h,'home')}${msRow(f,'b',f.a,'away')}${oddsRow(f)}</div>`).join('');
+}
+function syncRes(id){ // goals uit Wedstrijdstats automatisch als uitslag in de Poule-tracker
+ const d=MS[id]||{},a=(d.a&&d.a.g),b=(d.b&&d.b.g);
+ if(a!=null&&b!=null){RES[id]=[a,b];saveRes(RES);renderTracker();trackSummary();renderPoules();}
+}
+function msSet(id,side,field,val){
+ MS[id]=MS[id]||{a:{},b:{}};MS[id][side]=MS[id][side]||{};
+ const v=numF(val);if(v==null)delete MS[id][side][field];else MS[id][side][field]=v;
+ saveMS(MS);
+ const f=FIXT.find(x=>x.id===id);applyTeam(f.h);applyTeam(f.a);
+ refreshModel();msNoteUpdate();updateReadout(f);
+ if(field==='g')syncRes(id);
+ markSimStale();
+}
+window.msSet=msSet;
+function msNoteUpdate(){
+ const played=FIXT.filter(f=>msHasAny(MS[f.id])).length;
+ const extra=TEAMS.reduce((s,t)=>s+wcRecords(t.code).length,0);
+ document.getElementById('msnote').textContent=`${played} wedstrijden ingevuld · ${extra} extra teamrecords meegenomen in de vorm.`;
+}
+function exportBackup(){
+ const data={};
+ for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('wk2026_')===0)data[k]=localStorage.getItem(k);}
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a'),d=new Date().toISOString().slice(0,10);
+ a.href=url;a.download='wk2026-backup-'+d+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+ const n=document.getElementById('backupNote');if(n)n.textContent='✓ back-up gedownload ('+Object.keys(data).length+' onderdelen) — bewaar dit bestand';
+}
+function importBackup(file){
+ const r=new FileReader();
+ r.onload=()=>{
+  try{
+   const data=JSON.parse(r.result);let cnt=0;
+   Object.keys(data).forEach(k=>{if(k.indexOf('wk2026_')===0&&typeof data[k]==='string'){localStorage.setItem(k,data[k]);cnt++;}});
+   MS=loadMS();ODDS=loadODDS();RES=loadRes();UP=loadUP();
+   applyLiveAll();refreshModel();renderMatchstats();renderTracker();trackSummary();msNoteUpdate();markSimStale();
+   const n=document.getElementById('backupNote');if(n)n.textContent='✓ back-up geladen ('+cnt+' onderdelen) — alles is bijgewerkt';
+  }catch(e){const n=document.getElementById('backupNote');if(n)n.textContent='✗ kon dit bestand niet lezen — is het wel een back-up?';}
+ };
+ r.readAsText(file);
+}
+function initMatchstats(){
+ const gs=[...new Set(FIXT.map(f=>f.g))].sort();msgf=gs[0];
+ document.getElementById('msfilter').innerHTML=gs.map(g=>`<span class="fchip${g===msgf?' on':''}" data-g="${g}">groep ${g}</span>`).join('');
+ document.querySelectorAll('#msfilter .fchip').forEach(c=>c.onclick=()=>{document.querySelectorAll('#msfilter .fchip').forEach(x=>x.classList.remove('on'));c.classList.add('on');msgf=c.dataset.g;renderMatchstats();});
+ document.getElementById('msreset').onclick=()=>{if(confirm('Alle ingevoerde wedstrijdstats en odds wissen?')){MS={};ODDS={};saveMS(MS);saveODDS(ODDS);applyLiveAll();refreshModel();renderMatchstats();msNoteUpdate();markSimStale();}};
+ document.getElementById('exportBtn').onclick=exportBackup;
+ document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+ document.getElementById('importFile').onchange=e=>{if(e.target.files[0])importBackup(e.target.files[0]);e.target.value='';};
+ renderMatchstats();msNoteUpdate();
+}
+
+renderPred();renderPoules();renderBars();initSimFilter();renderSimTable();renderTeams();initTeamSort();initTracker();initBracket();initPlayers();tryLivePlayers();
+applyLiveAll();refreshModel();initMatchstats();
+document.getElementById('simRefresh').onclick=scheduleSim;
+scheduleSim();   // eerste live-simulatie (uitgesteld zodat de pagina eerst laadt)
+</script>
+</body></html>
