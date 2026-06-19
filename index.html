@@ -627,16 +627,37 @@ function parsePlayersText(txt){
  return out;
 }
 async function tryLivePlayers(){
- try{
-  const r=await fetch('spelers.json?t='+Date.now(),{cache:'no-store'});
-  if(!r.ok)return;
-  const a=await r.json();
-  if(Array.isArray(a)&&a.length){
-   PLAYERS=a.map(o=>({n:o.n||o.name||'',c:(o.c||o.country||'').toUpperCase(),gp:+o.gp||1,g:+o.g||0,a:+o.a||0,s:+o.s||0,sog:+o.sog||0,xg:+o.xg||0})).filter(o=>o.n);
-   savePlayers(PLAYERS);fillLand();renderPlayers();
-   const n=document.getElementById('plNote');if(n)n.textContent='✓ live data automatisch geladen ('+PLAYERS.length+' spelers)';
-  }
- }catch(e){/* lokaal bestand of geen spelers.json: stil terugvallen op ingebakken set */}
+ // probeer eerst rechtstreeks uit de repo (altijd actueel), dan de lokale kopie
+ const urls=['https://raw.githubusercontent.com/stennatter-hue/WK2030GOED/main/spelers.json?t='+Date.now(),'spelers.json?t='+Date.now()];
+ for(const u of urls){
+  try{
+   const r=await fetch(u,{cache:'no-store'});
+   if(!r.ok)continue;
+   const a=await r.json();
+   if(Array.isArray(a)&&a.length){
+    PLAYERS=a.map(o=>({n:o.n||o.name||'',c:(o.c||o.country||'').toUpperCase(),gp:+o.gp||1,g:+o.g||0,a:+o.a||0,s:+o.s||0,sog:+o.sog||0,xg:+o.xg||0})).filter(o=>o.n);
+    savePlayers(PLAYERS);fillLand();renderPlayers();
+    const n=document.getElementById('plNote');if(n)n.textContent='✓ live data geladen ('+PLAYERS.length+' spelers)';
+    return;
+   }
+  }catch(e){/* probeer volgende bron */}
+ }
+}
+async function tryLiveResults(){
+ const urls=['https://raw.githubusercontent.com/stennatter-hue/WK2030GOED/main/uitslagen.json?t='+Date.now(),'uitslagen.json?t='+Date.now()];
+ for(const u of urls){
+  try{
+   const r=await fetch(u,{cache:'no-store'});
+   if(!r.ok)continue;
+   const o=await r.json();
+   if(o&&typeof o==='object'&&!Array.isArray(o)){
+    let n=0;
+    Object.keys(o).forEach(id=>{const v=o[id];if(Array.isArray(v)&&v.length===2&&v[0]!=null&&v[1]!=null){RES[id]=[+v[0],+v[1]];n++;}});
+    if(n){saveRes(RES);try{renderTracker();trackSummary();renderPoules();}catch(e){}}
+    return;
+   }
+  }catch(e){/* probeer volgende bron */}
+ }
 }
 function initPlayers(){
  fillLand();document.getElementById('plLand').onchange=function(){plLandSel=this.value;renderPlayers();};
@@ -1057,7 +1078,7 @@ function initMatchstats(){
  renderMatchstats();msNoteUpdate();
 }
 
-renderPred();renderPoules();renderBars();initSimFilter();renderSimTable();renderTeams();initTeamSort();initTracker();initBracket();initPlayers();tryLivePlayers();
+renderPred();renderPoules();renderBars();initSimFilter();renderSimTable();renderTeams();initTeamSort();initTracker();initBracket();initPlayers();tryLivePlayers();tryLiveResults();
 applyLiveAll();refreshModel();initMatchstats();
 document.getElementById('simRefresh').onclick=scheduleSim;
 scheduleSim();   // eerste live-simulatie (uitgesteld zodat de pagina eerst laadt)
